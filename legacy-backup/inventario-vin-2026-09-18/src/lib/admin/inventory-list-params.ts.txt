@@ -1,0 +1,76 @@
+/** Estado del listado de inventario, en la URL — mismo principio que el resto. */
+export type InventoryStatusFilter = "all" | "available" | "reserved" | "sold";
+export type InventoryStockModeFilter = "all" | "stocked" | "on_demand";
+
+export const INVENTORY_STATUS_OPTIONS: { value: InventoryStatusFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "available", label: "Disponible" },
+  { value: "reserved", label: "Reservada" },
+  { value: "sold", label: "Vendida" },
+];
+export const INVENTORY_STOCK_MODE_OPTIONS: { value: InventoryStockModeFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "stocked", label: "Con stock físico" },
+  { value: "on_demand", label: "Bajo pedido" },
+];
+
+export const STATUS_TO_DB: Record<InventoryStatusFilter, "ALL" | "AVAILABLE" | "RESERVED" | "SOLD"> = {
+  all: "ALL",
+  available: "AVAILABLE",
+  reserved: "RESERVED",
+  sold: "SOLD",
+};
+export const STOCK_MODE_TO_DB: Record<InventoryStockModeFilter, "ALL" | "STOCKED" | "ON_DEMAND"> = {
+  all: "ALL",
+  stocked: "STOCKED",
+  on_demand: "ON_DEMAND",
+};
+
+export const INVENTORY_LIST_PAGE_SIZE = 50;
+
+export interface InventoryListQuery {
+  search: string;
+  status: InventoryStatusFilter;
+  stockMode: InventoryStockModeFilter;
+  productId: string | null;
+  page: number;
+}
+
+const STATUS_VALUES = new Set<InventoryStatusFilter>(["all", "available", "reserved", "sold"]);
+const STOCK_MODE_VALUES = new Set<InventoryStockModeFilter>(["all", "stocked", "on_demand"]);
+
+type RawParams = Record<string, string | string[] | undefined>;
+function first(v: string | string[] | undefined): string {
+  return (Array.isArray(v) ? v[0] : v ?? "").trim();
+}
+
+export function parseInventoryListSearchParams(raw: RawParams): InventoryListQuery {
+  const statusRaw = first(raw.status).toLowerCase();
+  const stockModeRaw = first(raw.stock).toLowerCase();
+  const pageNum = Number.parseInt(first(raw.page), 10);
+  return {
+    search: first(raw.q).slice(0, 120),
+    status: STATUS_VALUES.has(statusRaw as InventoryStatusFilter) ? (statusRaw as InventoryStatusFilter) : "all",
+    stockMode: STOCK_MODE_VALUES.has(stockModeRaw as InventoryStockModeFilter)
+      ? (stockModeRaw as InventoryStockModeFilter)
+      : "all",
+    productId: first(raw.product) || null,
+    page: Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1,
+  };
+}
+
+export function hasActiveInventoryFilters(q: InventoryListQuery): boolean {
+  return q.search !== "" || q.status !== "all" || q.stockMode !== "all" || Boolean(q.productId);
+}
+
+export function buildInventoryListHref(base: string, q: Partial<InventoryListQuery>): string {
+  const merged: InventoryListQuery = { search: "", status: "all", stockMode: "all", productId: null, page: 1, ...q };
+  const sp = new URLSearchParams();
+  if (merged.search) sp.set("q", merged.search);
+  if (merged.status !== "all") sp.set("status", merged.status);
+  if (merged.stockMode !== "all") sp.set("stock", merged.stockMode);
+  if (merged.productId) sp.set("product", merged.productId);
+  if (merged.page > 1) sp.set("page", String(merged.page));
+  const qs = sp.toString();
+  return qs ? `${base}?${qs}` : base;
+}

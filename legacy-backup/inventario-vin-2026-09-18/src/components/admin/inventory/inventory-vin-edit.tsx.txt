@@ -1,0 +1,104 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { TextField, TextAreaField } from "@/components/ui/form-fields";
+import { inventoryActionErrorText } from "@/lib/admin/inventory-errors";
+import { updateInventoryVin } from "@/app/(admin)/admin/inventario/actions";
+
+/**
+ * Corrección de VIN — regla dependiente del estado (ver migración):
+ *   AVAILABLE: corrección simple, motivo opcional.
+ *   RESERVED/SOLD: acción explícita con motivo OBLIGATORIO (nunca en línea
+ *   silenciosa). El server vuelve a exigir el motivo — este modal es UX,
+ *   no la barrera real.
+ */
+export function InventoryVinEdit({
+  unitId,
+  productId,
+  currentVin,
+  status,
+}: {
+  unitId: string;
+  productId: string;
+  currentVin: string | null;
+  status: string;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [vin, setVin] = useState(currentVin ?? "");
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const reasonRequired = status === "RESERVED" || status === "SOLD";
+
+  const openModal = () => {
+    setVin(currentVin ?? "");
+    setReason("");
+    setError(null);
+    setOpen(true);
+  };
+
+  const submit = async () => {
+    if (busy) return;
+    if (!vin.trim()) {
+      setError("El VIN es obligatorio.");
+      return;
+    }
+    if (reasonRequired && !reason.trim()) {
+      setError("Debes indicar un motivo para corregir un VIN reservado o vendido.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const res = await updateInventoryVin(unitId, vin.trim(), reason.trim() || undefined, productId);
+    if (!res.ok) {
+      setError(inventoryActionErrorText(res.code));
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    setOpen(false);
+    router.refresh();
+  };
+
+  return (
+    <>
+      <Button variant="secondary" size="sm" onClick={openModal}>
+        {reasonRequired ? "Corregir VIN (con motivo)" : "Corregir VIN"}
+      </Button>
+      <Modal
+        open={open}
+        onClose={() => !busy && setOpen(false)}
+        title="Corregir VIN"
+        description={
+          reasonRequired
+            ? "Esta unidad está reservada o vendida — el identificador histórico nunca cambia en silencio. Indica el motivo."
+            : "Unidad disponible: corrección simple."
+        }
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setOpen(false)} disabled={busy}>Cancelar</Button>
+            <Button variant="primary" size="sm" onClick={() => void submit()} disabled={busy}>
+              {busy ? "Guardando…" : "Guardar"}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <TextField label="VIN" required value={vin} onChange={(e) => setVin(e.target.value)} />
+          <TextAreaField
+            label={reasonRequired ? "Motivo (obligatorio)" : "Motivo (opcional)"}
+            required={reasonRequired}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+          {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+        </div>
+      </Modal>
+    </>
+  );
+}

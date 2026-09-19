@@ -1,0 +1,227 @@
+@import "tailwindcss";
+
+/* ===========================================================================
+ * SMILE MOTORS — design tokens
+ * ---------------------------------------------------------------------------
+ * UNA sola identidad para toda la aplicación (login, vendedor y admin):
+ * estructura negra/oscura, texto blanco, grises neutros y AMARILLO SOLO como
+ * color de acción / navegación activa / resaltado (nunca superficies enteras).
+ *
+ * Capas:
+ *   1. Paleta cruda de marca  (--smile-*)      → inspirada en el logo oficial.
+ *   2. Tokens SEMÁNTICOS       (--background…) → lo único que usan los
+ *      componentes. Nunca colores literales en los componentes.
+ *   3. `@theme inline`                          → utilidades Tailwind:
+ *      bg-background, bg-surface, bg-surface-muted, bg-surface-elevated,
+ *      text-foreground, text-text-secondary, text-muted-foreground,
+ *      border-border, border-border-strong, bg-brand, text-brand,
+ *      text-brand-foreground, bg-brand-soft, bg-primary (= brand),
+ *      bg-accent (= brand, alias histórico del área vendedor),
+ *      text-success / text-warning / text-danger / text-info (+ *-soft).
+ *
+ * `.theme-dark` se conserva como alias (la app entera ya es oscura) y activa
+ * además la variante `dark:` de Tailwind — así las clases `dark:` heredadas
+ * de módulos anteriores siempre resuelven a su versión oscura.
+ *
+ * Contraste (WCAG): foreground #F5F5F4 / #090909 ≈ 18:1 · muted #8F8F94 /
+ * #111111 ≈ 5.9:1 · amarillo #FFD21F / #090909 ≈ 14:1 · texto #0A0A0A sobre
+ * amarillo ≈ 14:1.
+ * ======================================================================== */
+@custom-variant dark (&:where(.theme-dark, .theme-dark *));
+
+:root,
+.theme-dark {
+  color-scheme: dark;
+
+  /* 1. Paleta de marca ---------------------------------------------------- */
+  --smile-black: #090909;
+  --smile-surface: #111111;
+  --smile-surface-2: #181818;
+  --smile-surface-3: #1f1f1f;
+  --smile-yellow: #ffd21f;
+  --smile-yellow-hover: #eabd00;
+  --smile-white: #ffffff;
+  --smile-gray-50: #f5f5f4;
+  --smile-gray-300: #c9c9cc;
+  --smile-gray-500: #8f8f94;
+  --smile-gray-700: #3a3a3a;
+  --smile-gray-800: #262626;
+
+  /* 2. Tokens semánticos -------------------------------------------------- */
+  --background: var(--smile-black);
+  --surface: var(--smile-surface);
+  --surface-muted: var(--smile-surface-2);
+  --surface-elevated: var(--smile-surface-3);
+  --foreground: var(--smile-gray-50);
+  --text-secondary: var(--smile-gray-300);
+  --muted-foreground: var(--smile-gray-500);
+  --border: var(--smile-gray-800);
+  --border-strong: var(--smile-gray-700);
+
+  --brand: var(--smile-yellow);
+  --brand-hover: var(--smile-yellow-hover);
+  --brand-foreground: #0a0a0a;
+  --brand-soft: rgba(255, 210, 31, 0.12);
+
+  /* `primary` y `accent` = marca (acciones primarias, activo). */
+  --primary: var(--brand);
+  --primary-hover: var(--brand-hover);
+  --primary-foreground: var(--brand-foreground);
+  --accent: var(--brand);
+  --accent-hover: var(--brand-hover);
+  --accent-foreground: var(--brand-foreground);
+  --accent-soft: var(--brand-soft);
+
+  --ring: var(--smile-yellow);
+
+  /* Estados — el "warning" es naranja a propósito, para no confundirse
+   * nunca con el amarillo de marca/acción. */
+  --success: #3dd68c;
+  --success-soft: rgba(61, 214, 140, 0.12);
+  --warning: #ff9f43;
+  --warning-soft: rgba(255, 159, 67, 0.12);
+  --danger: #f2555a;
+  --danger-surface: rgba(242, 85, 90, 0.12);
+  --info: #5aa9ff;
+  --info-soft: rgba(90, 169, 255, 0.12);
+
+  --overlay: rgba(0, 0, 0, 0.72);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-foreground: var(--foreground);
+  --color-text-secondary: var(--text-secondary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-surface: var(--danger-surface);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-overlay: var(--overlay);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Micro-interacciones: cortas, sutiles, sin movimiento grande. */
+  --animate-fade-in: smile-fade-in 140ms ease-out both;
+  --animate-pop-in: smile-pop-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slide-in-right: smile-slide-in-right 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slide-in-left: smile-slide-in-left 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-progress: smile-progress 1.1s ease-in-out infinite;
+}
+
+@keyframes smile-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes smile-pop-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes smile-slide-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes smile-slide-in-left {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes smile-progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+/* Reglas base EN CAPA: así las utilidades de Tailwind (p. ej. un anillo de
+ * foco propio con focus-visible:outline-none) siempre pueden sobrescribirlas. */
+@layer base {
+  html {
+    background: var(--background);
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  }
+
+  ::selection {
+    background: var(--brand);
+    color: var(--brand-foreground);
+  }
+
+  /* Foco de teclado SIEMPRE visible: default para cualquier control que no
+   * declare su propio anillo (los componentes compartidos usan ring-ring). */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Diálogos nativos: entrada sutil + backdrop consistente. */
+  dialog[open] {
+    animation: smile-pop-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  dialog::backdrop {
+    background: var(--overlay);
+  }
+}
+
+/* Fuera de capa a propósito: debe ganar a cualquier animación/transición. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===========================================================================
+ * Impresión (IMPRIMIR en la ficha / confirmación de venta).
+ * Fuerza tinta oscura sobre papel blanco y oculta chrome y botones.
+ * ======================================================================== */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  .print-area {
+    margin: 0 !important;
+    max-width: none !important;
+    color: #000 !important;
+  }
+  .print-area * {
+    color: #000 !important;
+    background: transparent !important;
+    border-color: #bbb !important;
+    box-shadow: none !important;
+  }
+  .print-area pre {
+    white-space: pre-wrap;
+    border: 1px solid #ccc;
+  }
+}

@@ -1,0 +1,148 @@
+import "server-only";
+import { createClient } from "@/lib/supabase/server";
+
+/**
+ * Inventario / VIN — capa de datos de Admin. Todo pasa por las RPC
+ * `admin_inventory_*`/`admin_create_inventory_unit`/etc. (`SECURITY
+ * DEFINER`, verifican `is_admin()` server-side) — mismo patrón que
+ * Financieras/Vendedores/Productos.
+ */
+export type InventoryStatus = "AVAILABLE" | "RESERVED" | "SOLD" | "UNAVAILABLE";
+
+export interface InventoryKpis {
+  available: number;
+  reserved: number;
+  sold: number;
+  onDemandProducts: number;
+  discrepancyProducts: number;
+}
+
+export async function getInventoryKpis(): Promise<InventoryKpis> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_inventory_kpis");
+  const empty: InventoryKpis = { available: 0, reserved: 0, sold: 0, onDemandProducts: 0, discrepancyProducts: 0 };
+  if (error || !data) return empty;
+  const res = data as unknown as { ok: boolean } & Partial<InventoryKpis>;
+  if (!res.ok) return empty;
+  return {
+    available: res.available ?? 0,
+    reserved: res.reserved ?? 0,
+    sold: res.sold ?? 0,
+    onDemandProducts: res.onDemandProducts ?? 0,
+    discrepancyProducts: res.discrepancyProducts ?? 0,
+  };
+}
+
+export interface InventoryListItem {
+  inventoryUnitId: string;
+  vin: string | null;
+  status: InventoryStatus;
+  productId: string;
+  productName: string;
+  productLegacyId: string | null;
+  stockMode: string | null;
+  variantId: string | null;
+  variantName: string | null;
+  saleId: string | null;
+  saleNumber: string | null;
+  saleStatus: string | null;
+  createdAt: string;
+}
+
+export interface InventoryListFilters {
+  search: string;
+  status: "ALL" | InventoryStatus;
+  productId: string | null;
+  variantId: string | null;
+  stockMode: "ALL" | "STOCKED" | "ON_DEMAND";
+  limit: number;
+  offset: number;
+}
+
+export interface InventoryListResult {
+  items: InventoryListItem[];
+  total: number;
+}
+
+export async function getInventoryList(filters: InventoryListFilters): Promise<InventoryListResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_inventory_list", {
+    p_search: filters.search || undefined,
+    p_status: filters.status,
+    p_product_id: filters.productId || undefined,
+    p_variant_id: filters.variantId || undefined,
+    p_stock_mode: filters.stockMode,
+    p_limit: filters.limit,
+    p_offset: filters.offset,
+  });
+  if (error || !data) return { items: [], total: 0 };
+  const res = data as unknown as { ok: boolean; items?: InventoryListItem[]; total?: number };
+  if (!res.ok) return { items: [], total: 0 };
+  return { items: res.items ?? [], total: res.total ?? 0 };
+}
+
+export interface InventoryUnitDetail {
+  id: string;
+  vin: string | null;
+  status: InventoryStatus;
+  legacyStatus: string | null;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+  productId: string;
+  productName: string;
+  productLegacyId: string | null;
+  stockMode: string | null;
+  variantId: string | null;
+  variantName: string | null;
+  referencePriceCents: number | null;
+  baseCommissionCents: number | null;
+}
+export interface InventorySaleUnitLink {
+  saleUnitId: string;
+  saleId: string;
+  saleNumber: string | null;
+  saleStatus: string;
+  trackingCode: string | null;
+}
+export interface InventoryHistoryEntry {
+  eventType: string;
+  actorName: string | null;
+  fromStatus: string | null;
+  toStatus: string | null;
+  saleId: string | null;
+  reason: string | null;
+  changes: Record<string, unknown> | null;
+  createdAt: string;
+}
+export interface InventoryUnitFullDetail {
+  unit: InventoryUnitDetail;
+  saleUnit: InventorySaleUnitLink | null;
+  history: InventoryHistoryEntry[];
+}
+
+export async function getInventoryUnitDetail(inventoryUnitId: string): Promise<InventoryUnitFullDetail | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_inventory_detail", { p_inventory_unit_id: inventoryUnitId });
+  if (error || !data) return null;
+  const res = data as unknown as { ok: boolean } & Partial<InventoryUnitFullDetail>;
+  if (!res.ok || !res.unit) return null;
+  return { unit: res.unit, saleUnit: res.saleUnit ?? null, history: res.history ?? [] };
+}
+
+export interface ReconciliationItem {
+  productId: string;
+  productName: string;
+  reportedQuantity: number;
+  vinCount: number;
+  difference: number;
+}
+
+export async function getInventoryReconciliation(): Promise<ReconciliationItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_inventory_reconciliation");
+  if (error || !data) return [];
+  const res = data as unknown as { ok: boolean; items?: ReconciliationItem[] };
+  if (!res.ok) return [];
+  return res.items ?? [];
+}

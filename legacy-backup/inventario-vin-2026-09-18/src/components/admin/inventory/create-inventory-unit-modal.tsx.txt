@@ -1,0 +1,94 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { TextField } from "@/components/ui/form-fields";
+import { inventoryActionErrorText } from "@/lib/admin/inventory-errors";
+import type { ProductOption } from "@/app/(admin)/admin/inventario/actions";
+import { createInventoryUnit } from "@/app/(admin)/admin/inventario/actions";
+import { ProductVariantFields } from "@/components/admin/inventory/product-variant-fields";
+import { toast } from "@/components/ui/toast";
+
+/** `defaultOpen`: abre el modal al cargar (acción rápida `?nuevo=1`). */
+export function CreateInventoryUnitModal({ products, defaultOpen = false }: { products: ProductOption[]; defaultOpen?: boolean }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(defaultOpen);
+  const [productId, setProductId] = useState("");
+  const [variantId, setVariantId] = useState("");
+  const [vin, setVin] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const close = () => {
+    if (busy) return;
+    setOpen(false);
+    setProductId("");
+    setVariantId("");
+    setVin("");
+    setNote("");
+    setError(null);
+  };
+
+  const submit = async () => {
+    if (busy) return;
+    if (!productId || !vin.trim()) {
+      setError("Selecciona un producto e ingresa el VIN.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const res = await createInventoryUnit({
+      productId,
+      variantId: variantId || undefined,
+      vin: vin.trim(),
+      note: note.trim() || undefined,
+    });
+    if (!res.ok) {
+      setError(inventoryActionErrorText(res.code));
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    close();
+    toast.success("VIN agregado al inventario.");
+    router.refresh();
+  };
+
+  return (
+    <>
+      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
+        Nueva unidad
+      </Button>
+      <Modal
+        open={open}
+        onClose={close}
+        title="Nueva unidad de inventario"
+        description="Un VIN se creará como DISPONIBLE. El VIN se normaliza (espacios recortados, mayúsculas) y debe ser único."
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onClick={close} disabled={busy}>Cancelar</Button>
+            <Button variant="primary" size="sm" onClick={() => void submit()} disabled={busy}>
+              {busy ? "Creando…" : "Crear"}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <ProductVariantFields
+            products={products}
+            productId={productId}
+            variantId={variantId}
+            onProductChange={setProductId}
+            onVariantChange={setVariantId}
+          />
+          <TextField label="VIN" required value={vin} onChange={(e) => setVin(e.target.value)} placeholder="Ej.: H0DPBFG99TX139487" />
+          <TextField label="Nota (opcional)" value={note} onChange={(e) => setNote(e.target.value)} />
+          {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+        </div>
+      </Modal>
+    </>
+  );
+}

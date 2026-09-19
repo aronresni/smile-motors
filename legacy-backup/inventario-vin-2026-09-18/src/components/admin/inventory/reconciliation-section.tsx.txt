@@ -1,0 +1,59 @@
+import Link from "next/link";
+import { ROUTES } from "@/lib/constants";
+import type { ReconciliationItem } from "@/lib/admin/inventory";
+
+/** Solo informativo — nunca repara automáticamente. */
+export function ReconciliationSection({ items }: { items: ReconciliationItem[] }) {
+  if (items.length === 0) {
+    return (
+      <div className="rounded-xl border p-4 border-border bg-surface">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Discrepancias de inventario</h2>
+        <p className="mt-2 text-xs text-muted-foreground">Sin discrepancias — la cantidad reportada coincide con los VIN registrados en todos los productos.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border p-4 border-warning/30 bg-warning/10">
+      <h2 className="text-[11px] font-semibold uppercase tracking-wide text-warning">
+        Discrepancias de inventario ({items.length})
+      </h2>
+      <p className="mt-1 text-[11px] text-warning/80">
+        Cantidad reportada (legado) vs. unidades VIN físicas registradas. Solo informativo — no se repara automáticamente.
+      </p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-[11px] uppercase tracking-wide border-warning/20 text-warning/70">
+              <th className="py-1.5 pr-3 font-medium">Producto</th>
+              <th className="py-1.5 pr-3 text-right font-medium">Reportado</th>
+              <th className="py-1.5 pr-3 text-right font-medium">VIN</th>
+              <th className="py-1.5 pr-3 text-right font-medium">Diferencia</th>
+              <th className="py-1.5" />
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr key={item.productId} className="border-b last:border-0 border-warning/20">
+                <td className="py-1.5 pr-3">{item.productName}</td>
+                <td className="py-1.5 pr-3 text-right tabular-nums">{item.reportedQuantity}</td>
+                <td className="py-1.5 pr-3 text-right tabular-nums">{item.vinCount}</td>
+                <td className="py-1.5 pr-3 text-right tabular-nums font-semibold text-warning">
+                  {item.difference > 0 ? `+${item.difference}` : item.difference}
+                </td>
+                <td className="py-1.5 text-right">
+                  <Link
+                    href={`${ROUTES.adminProductos}/${item.productId}`}
+                    className="text-xs font-medium hover:underline text-warning"
+                  >
+                    Ver producto
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,110 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { SelectField } from "@/components/ui/form-fields";
+import { inventoryActionErrorText } from "@/lib/admin/inventory-errors";
+import {
+  assignInventoryVin,
+  listAvailableInventoryForAssignment,
+  type AvailableInventoryOption,
+} from "@/app/(admin)/admin/inventario/actions";
+import { toast } from "@/components/ui/toast";
+
+export function AssignVinModal({
+  saleId,
+  saleUnitId,
+  productId,
+  variantId,
+  productName,
+}: {
+  saleId: string;
+  saleUnitId: string;
+  productId: string;
+  variantId: string | null;
+  productName: string;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [options, setOptions] = useState<AvailableInventoryOption[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    // Arranca async a propósito: evita setState síncrono en el cuerpo del efecto.
+    queueMicrotask(() => {
+      if (!alive) return;
+      setLoading(true);
+      listAvailableInventoryForAssignment(productId, variantId)
+        .then((opts) => {
+          if (alive) setOptions(opts);
+        })
+        .finally(() => {
+          if (alive) setLoading(false);
+        });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [open, productId, variantId]);
+
+  const submit = async () => {
+    if (busy || !selected) return;
+    setBusy(true);
+    setError(null);
+    const res = await assignInventoryVin(saleUnitId, selected, saleId);
+    if (!res.ok) {
+      setError(inventoryActionErrorText(res.code));
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    setOpen(false);
+    toast.success("VIN asignado correctamente.");
+    router.refresh();
+  };
+
+  return (
+    <>
+      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
+        Asignar VIN
+      </Button>
+      <Modal
+        open={open}
+        onClose={() => !busy && setOpen(false)}
+        title="Asignar VIN"
+        description={`Solo se listan unidades DISPONIBLES de "${productName}" con la variante compatible. El servidor vuelve a validar la compatibilidad y la disponibilidad al confirmar.`}
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setOpen(false)} disabled={busy}>Cancelar</Button>
+            <Button variant="primary" size="sm" onClick={() => void submit()} disabled={busy || !selected}>
+              {busy ? "Asignando…" : "Asignar"}
+            </Button>
+          </>
+        }
+      >
+        {loading ? (
+          <p className="text-xs text-muted-foreground">Cargando unidades disponibles…</p>
+        ) : options.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No hay unidades disponibles para este producto/variante en este momento.</p>
+        ) : (
+          <SelectField
+            label="VIN disponible"
+            required
+            placeholder="Selecciona un VIN"
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+            options={options.map((o) => ({ value: o.id, label: o.vin ?? o.id }))}
+          />
+        )}
+        {error && <p role="alert" className="mt-3 text-xs text-danger">{error}</p>}
+      </Modal>
+    </>
+  );
+}

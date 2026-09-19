@@ -1,0 +1,85 @@
+import type { Metadata } from "next";
+import {
+  getInventoryKpis,
+  getInventoryList,
+  getInventoryReconciliation,
+} from "@/lib/admin/inventory";
+import {
+  STATUS_TO_DB,
+  STOCK_MODE_TO_DB,
+  INVENTORY_LIST_PAGE_SIZE,
+  hasActiveInventoryFilters,
+  parseInventoryListSearchParams,
+} from "@/lib/admin/inventory-list-params";
+import { listAllProductsForPicker } from "@/app/(admin)/admin/inventario/actions";
+import { InventoryKpiCards } from "@/components/admin/inventory/inventory-kpis";
+import { InventoryListToolbar } from "@/components/admin/inventory/inventory-list-toolbar";
+import { InventoryListResults } from "@/components/admin/inventory/inventory-list-results";
+import { CreateInventoryUnitModal } from "@/components/admin/inventory/create-inventory-unit-modal";
+import { BulkVinModal } from "@/components/admin/inventory/bulk-vin-modal";
+import { ReconciliationSection } from "@/components/admin/inventory/reconciliation-section";
+
+export const metadata: Metadata = { title: "Inventario · Admin" };
+export const dynamic = "force-dynamic";
+
+export default async function AdminInventarioPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const sp = await searchParams;
+  const query = parseInventoryListSearchParams(sp);
+  const autoOpen = (Array.isArray(sp.nuevo) ? sp.nuevo[0] : sp.nuevo) === "1";
+  const [kpis, { items, total }, reconciliation, products] = await Promise.all([
+    getInventoryKpis(),
+    getInventoryList({
+      search: query.search,
+      status: STATUS_TO_DB[query.status],
+      productId: query.productId,
+      variantId: null,
+      stockMode: STOCK_MODE_TO_DB[query.stockMode],
+      limit: INVENTORY_LIST_PAGE_SIZE,
+      offset: (query.page - 1) * INVENTORY_LIST_PAGE_SIZE,
+    }),
+    getInventoryReconciliation(),
+    listAllProductsForPicker(),
+  ]);
+
+  const filtersActive = hasActiveInventoryFilters(query);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold">Inventario</h1>
+          <p className="text-sm text-muted-foreground">Unidades físicas (VIN) del catálogo. Nunca se inventan VIN ni se repara automáticamente.</p>
+        </div>
+        <div className="flex gap-2">
+          <BulkVinModal products={products} />
+          <CreateInventoryUnitModal products={products} defaultOpen={autoOpen} />
+        </div>
+      </div>
+
+      <InventoryKpiCards kpis={kpis} />
+
+      {reconciliation.length > 0 && <ReconciliationSection items={reconciliation} />}
+
+      <InventoryListToolbar />
+
+      {items.length === 0 ? (
+        <div className="rounded-xl border border-dashed px-6 py-14 text-center border-border">
+          <p className="text-sm font-medium text-text-secondary">
+            {filtersActive ? "No encontramos unidades con estos filtros." : "No hay unidades de inventario todavía."}
+          </p>
+        </div>
+      ) : (
+        <>
+          <InventoryListResults items={items} />
+          <p className="text-center text-[11px] text-muted-foreground">
+            Mostrando {items.length} de {total}
+          </p>
+        </>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,28 @@
+import type { InventoryKpis } from "@/lib/admin/inventory";
+
+function KpiCard({ label, value, tone }: { label: string; value: number; tone?: "warn" }) {
+  return (
+    <div className="rounded-xl border p-3.5 border-border bg-surface">
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p
+        className={`mt-1 text-2xl font-semibold tabular-nums ${
+          tone === "warn" && value > 0 ? "text-warning" : "text-foreground"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+export function InventoryKpiCards({ kpis }: { kpis: InventoryKpis }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <KpiCard label="Unidades disponibles" value={kpis.available} />
+      <KpiCard label="Reservadas" value={kpis.reserved} />
+      <KpiCard label="Vendidas" value={kpis.sold} />
+      <KpiCard label="Productos bajo pedido" value={kpis.onDemandProducts} />
+      <KpiCard label="Productos con discrepancia" value={kpis.discrepancyProducts} tone="warn" />
+    </div>
+  );
+}

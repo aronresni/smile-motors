@@ -1,0 +1,32 @@
+/**
+ * VIN de UNA unidad de venta, de solo lectura para el vendedor. Nunca
+ * incluye acciones (crear/editar/reservar/liberar son exclusivas de Admin,
+ * verificadas server-side — este componente ni siquiera las importa).
+ */
+export interface SaleUnitVinInfo {
+  stockMode: string | null;
+  vin: string | null;
+  inventoryStatus: string | null;
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  AVAILABLE: "Disponible",
+  RESERVED: "Reservada",
+  SOLD: "Vendida",
+};
+
+export function SaleUnitVinReadOnly({ info }: { info: SaleUnitVinInfo | undefined }) {
+  if (!info) return null;
+  if (info.vin) {
+    return (
+      <span className="mt-0.5 block text-[11px] text-muted-foreground">
+        VIN: <span className="font-mono text-foreground">{info.vin}</span>
+        {info.inventoryStatus && ` · ${STATUS_LABEL[info.inventoryStatus] ?? info.inventoryStatus}`}
+      </span>
+    );
+  }
+  if (info.stockMode === "on_demand") {
+    return <span className="mt-0.5 block text-[11px] text-muted-foreground">Bajo pedido — VIN no asignado</span>;
+  }
+  return null;
+}

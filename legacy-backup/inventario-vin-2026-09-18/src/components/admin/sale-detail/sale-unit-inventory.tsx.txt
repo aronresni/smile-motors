@@ -1,0 +1,130 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { TextAreaField } from "@/components/ui/form-fields";
+import { ROUTES } from "@/lib/constants";
+import { inventoryActionErrorText } from "@/lib/admin/inventory-errors";
+import { releaseInventoryVin } from "@/app/(admin)/admin/inventario/actions";
+import { AssignVinModal } from "@/components/admin/sale-detail/assign-vin-modal";
+import { toast } from "@/components/ui/toast";
+
+export interface SaleUnitInventoryInfo {
+  saleUnitId: string;
+  productId: string;
+  variantId: string | null;
+  stockMode: string | null;
+  inventoryUnitId: string | null;
+  vin: string | null;
+  inventoryStatus: string | null;
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  AVAILABLE: "Disponible",
+  RESERVED: "Reservada",
+  SOLD: "Vendida",
+  UNAVAILABLE: "No disponible",
+};
+
+function ReleaseVinButton({ saleId, saleUnitId }: { saleId: string; saleUnitId: string }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async () => {
+    if (busy) return;
+    if (!reason.trim()) {
+      setError("Indica un motivo para liberar el VIN.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const res = await releaseInventoryVin(saleUnitId, reason.trim(), saleId);
+    if (!res.ok) {
+      setError(inventoryActionErrorText(res.code));
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    setOpen(false);
+    toast.success("VIN liberado. La unidad vuelve a estar disponible.");
+    router.refresh();
+  };
+
+  return (
+    <>
+      <Button variant="danger" size="sm" onClick={() => setOpen(true)}>
+        Liberar VIN
+      </Button>
+      <Modal
+        open={open}
+        onClose={() => !busy && setOpen(false)}
+        title="Liberar VIN"
+        description="La unidad vuelve a DISPONIBLE y se quita la asociación con esta venta. El historial se conserva."
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setOpen(false)} disabled={busy}>Cancelar</Button>
+            <Button variant="danger" size="sm" onClick={() => void submit()} disabled={busy}>
+              {busy ? "Liberando…" : "Liberar"}
+            </Button>
+          </>
+        }
+      >
+        <TextAreaField
+          label="Motivo (obligatorio)"
+          required
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+        {error && <p role="alert" className="mt-3 text-xs text-danger">{error}</p>}
+      </Modal>
+    </>
+  );
+}
+
+/** "INVENTARIO / VIN" por unidad de venta, en la ficha de venta de Admin. */
+export function SaleUnitInventoryBadge({
+  saleId,
+  info,
+  productName,
+}: {
+  saleId: string;
+  info: SaleUnitInventoryInfo;
+  productName: string;
+}) {
+  if (info.inventoryUnitId) {
+    return (
+      <div className="flex items-center gap-2">
+        <Link
+          href={`${ROUTES.adminInventario}/${info.inventoryUnitId}`}
+          className="font-mono text-[11px] text-primary hover:underline"
+        >
+          {info.vin ?? "—"}
+        </Link>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {STATUS_LABEL[info.inventoryStatus ?? ""] ?? info.inventoryStatus}
+        </span>
+        {info.inventoryStatus === "RESERVED" && <ReleaseVinButton saleId={saleId} saleUnitId={info.saleUnitId} />}
+      </div>
+    );
+  }
+
+  if (info.stockMode === "on_demand") {
+    return <span className="text-[11px] font-medium text-muted-foreground">BAJO PEDIDO — VIN NO ASIGNADO</span>;
+  }
+
+  return (
+    <AssignVinModal
+      saleId={saleId}
+      saleUnitId={info.saleUnitId}
+      productId={info.productId}
+      variantId={info.variantId}
+      productName={productName}
+    />
+  );
+}

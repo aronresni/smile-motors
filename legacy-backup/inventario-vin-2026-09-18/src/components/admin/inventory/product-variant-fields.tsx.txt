@@ -1,0 +1,76 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { SelectField } from "@/components/ui/form-fields";
+import {
+  listProductVariantsForPicker,
+  type ProductOption,
+  type VariantOption,
+} from "@/app/(admin)/admin/inventario/actions";
+
+/** Selector producto → variante (variantes se cargan al elegir el
+ * producto). Compartido por "Crear unidad" y "Agregar varios VIN". */
+export function ProductVariantFields({
+  products,
+  productId,
+  variantId,
+  onProductChange,
+  onVariantChange,
+}: {
+  products: ProductOption[];
+  productId: string;
+  variantId: string;
+  onProductChange: (id: string) => void;
+  onVariantChange: (id: string) => void;
+}) {
+  const [variants, setVariants] = useState<VariantOption[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    // El cuerpo del efecto arranca async (microtask) a propósito: evita
+    // llamar a setState de forma síncrona en el cuerpo del efecto.
+    queueMicrotask(() => {
+      if (!alive) return;
+      if (!productId) {
+        setVariants([]);
+        return;
+      }
+      setLoading(true);
+      listProductVariantsForPicker(productId)
+        .then((v) => {
+          if (alive) setVariants(v);
+        })
+        .finally(() => {
+          if (alive) setLoading(false);
+        });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [productId]);
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <SelectField
+        label="Producto"
+        required
+        placeholder="Selecciona un producto"
+        value={productId}
+        onChange={(e) => {
+          onProductChange(e.target.value);
+          onVariantChange("");
+        }}
+        options={products.map((p) => ({ value: p.id, label: p.legacyId ? `${p.name} (${p.legacyId})` : p.name }))}
+      />
+      <SelectField
+        label="Variante (opcional)"
+        placeholder={loading ? "Cargando…" : variants.length === 0 ? "Sin variantes" : "Sin variante específica"}
+        disabled={!productId || variants.length === 0}
+        value={variantId}
+        onChange={(e) => onVariantChange(e.target.value)}
+        options={variants.map((v) => ({ value: v.id, label: v.colorName }))}
+      />
+    </div>
+  );
+}

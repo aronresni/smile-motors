@@ -1,0 +1,771 @@
+[
+    {
+        "data": {
+            "id": "STK-MODQE8RS-6N6DPT",
+            "name": "IZUKI CHALLENGER (W2500)",
+            "brand": "IZUKI",
+            "power": "",
+            "total": 0,
+            "engine": "",
+            "images": [
+                "inventory/STK-MODQE8RS-6N6DPT_img0_1779135803886.jpg"
+            ],
+            "status": "En Stock",
+            "weight": "",
+            "category": "ELECTRIC",
+            "isActive": true,
+            "shipping": 0,
+            "stockMode": "on_demand",
+            "timestamp": 1777084781032,
+            "commission": 375,
+            "totalHabana": 3350,
+            "displacement": "ELECTRIC",
+            "stockByColor": [
+                {
+                    "vins": [],
+                    "color": "BLUE",
+                    "quantity": 1
+                },
+                {
+                    "vins": [],
+                    "color": "BLACK",
+                    "quantity": 1
+                },
+                {
+                    "vins": [],
+                    "color": "PURPLE",
+                    "quantity": 1
+                }
+            ],
+            "onDemandTracksQuantity": false
+        }
+    },
+    {
+        "data": {
+            "id": "STK-MODQE8RS-077SIX",
+            "name": "GTX 250CC",
+            "brand": "Vitacci",
+            "power": "",
+            "total": 3500,
+            "engine": "",
+            "images": [
+                "bikes/STK-MODQE8RS-077SIX/photo_0_1777600329970.jpg",
+                "bikes/STK-MODQE8RS-077SIX/photo_1_1777600330716.jpg"
+            ],
+            "status": "En Stock",
+            "weight": "",
+            "category": "250CC",
+            "isActive": true,
+            "shipping": 1400,
+            "timestamp": 1777084781032,
+            "commission": 500,
+            "totalHabana": 4600,
+            "displacement": "250CC",
+            "stockByColor": [
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFG99TX139487",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFG92TX139461",
+                            "note": null,
+                            "status": "available"
+                        }
+                    ],
+                    "color": "White",
+                    "quantity": 2
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFG93TX139453",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFG92TX139458",
+                            "note": null,
+                            "status": "available"
+                        }
+                    ],
+                    "color": "Green",
+                    "quantity": 1
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFG93SX125602",
+                            "note": null,
+                            "status": "available"
+                        }
+                    ],
+                    "color": "Blue",
+                    "quantity": 0
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFG98TX139402",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFG97TX139410",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFG97SX125554",
+                            "note": null,
+                            "status": "available"
+                        }
+                    ],
+                    "color": "Red",
+                    "quantity": 1
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFG95TX139387",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFG90TX139393",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFG99TX139392",
+                            "note": null,
+                            "status": "available"
+                        }
+                    ],
+                    "color": "Black",
+                    "quantity": 3
+                }
+            ]
+        }
+    },
+    {
+        "data": {
+            "id": "STK-MODQE8RS-TOWMPQ",
+            "name": "TITAN 250CC",
+            "brand": "VITACCI",
+            "power": "",
+            "total": 3500,
+            "engine": "",
+            "images": [
+                "inventory/STK-MODQE8RS-TOWMPQ_img0_1777127777449.jpg",
+                "inventory/STK-MODQE8RS-TOWMPQ_img1_1777127778744.jpg"
+            ],
+            "status": "En Stock",
+            "weight": "",
+            "category": "250CC",
+            "isActive": true,
+            "shipping": 1400,
+            "timestamp": 1777084781032,
+            "commission": 500,
+            "totalHabana": 4600,
+            "displacement": "250CC",
+            "stockByColor": [
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFGA1TX139493",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGA5TX139500",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGA5SX125613",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGA1SX126516",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGA6SX125622",
+                            "note": "-",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "Black",
+                    "quantity": 1
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFGA7TX139532",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGA3SX126582",
+                            "note": null,
+                            "status": "sold_out"
+                        }
+                    ],
+                    "color": "Green",
+                    "quantity": 3
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFGAXSX125722",
+                            "note": null,
+                            "status": "available"
+                        }
+                    ],
+                    "color": "Blue",
+                    "quantity": 2
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "ROJO",
+                    "quantity": 4
+                }
+            ]
+        }
+    },
+    {
+        "data": {
+            "id": "STK-MODQE8RS-J8BQP1",
+            "name": "IZUKI VOLTUS (W3000)",
+            "brand": "IZUKI",
+            "power": "",
+            "total": 2850,
+            "engine": "",
+            "images": [
+                "inventory/STK-MODQE8RS-J8BQP1_img0_1781363984191.jpg"
+            ],
+            "status": "En Stock",
+            "weight": "",
+            "category": "ELECTRIC",
+            "isActive": true,
+            "shipping": 0,
+            "stockMode": "on_demand",
+            "timestamp": 1777084781032,
+            "commission": 375,
+            "totalHabana": 3150,
+            "displacement": "ELECTRIC",
+            "stockByColor": [
+                {
+                    "vins": [],
+                    "color": "RED",
+                    "quantity": 0
+                },
+                {
+                    "vins": [],
+                    "color": "BLACK",
+                    "quantity": 1
+                },
+                {
+                    "vins": [],
+                    "color": "BLUE",
+                    "quantity": 1
+                }
+            ]
+        }
+    },
+    {
+        "data": {
+            "id": "STK-MODQE8RS-MHMWHC",
+            "name": "IZUKI SKYLINE 250CC",
+            "brand": "IZUKI",
+            "power": "",
+            "total": 4000,
+            "engine": "",
+            "images": [
+                "inventory/STK-MODQE8RS-MHMWHC_img0_1778100124166.jpg"
+            ],
+            "status": "En Stock",
+            "weight": "",
+            "category": "250CC",
+            "isActive": true,
+            "shipping": 0,
+            "stockMode": "on_demand",
+            "timestamp": 1777084781032,
+            "commission": 500,
+            "totalHabana": 4000,
+            "displacement": "250CC",
+            "stockByColor": [
+                {
+                    "vins": [
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "AZUL",
+                    "quantity": 0
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "BLANCO",
+                    "quantity": 0
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "VIOLETA",
+                    "quantity": 0
+                }
+            ]
+        }
+    },
+    {
+        "data": {
+            "id": "STK-MODQE8RS-RVR2OR",
+            "name": "SUPRA 200CC",
+            "brand": "ITALICA",
+            "power": "",
+            "total": 2900,
+            "engine": "",
+            "images": [
+                "inventory/STK-MODQE8RS-RVR2OR_img0_1778097045471.jpg"
+            ],
+            "status": "En Stock",
+            "weight": "",
+            "category": "200CC",
+            "isActive": true,
+            "shipping": 1200,
+            "timestamp": 1777084781032,
+            "commission": 450,
+            "totalHabana": 4099,
+            "displacement": "200CC",
+            "stockByColor": [
+                {
+                    "vins": [
+                        {
+                            "vin": "HZ2TCDH50T1090312",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "BLANCO",
+                    "quantity": 0
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "HZ2TCDH54T1090183",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "ROJO",
+                    "quantity": 0
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "HZ2TCDH57T1090209",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "HZ2TCDH5XT1090205",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "NEGRO",
+                    "quantity": 1
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "HZ2TCDH5XT1090186",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "AZUL",
+                    "quantity": 1
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "GRIS",
+                    "quantity": 0
+                }
+            ]
+        }
+    },
+    {
+        "data": {
+            "id": "STK-MODQE8RS-DP6VNW",
+            "name": "SUPRA 200CC II",
+            "brand": "ITALICA",
+            "power": "",
+            "total": 3100,
+            "engine": "",
+            "images": [
+                "inventory/STK-MODQE8RS-DP6VNW_img0_1778098046170.jpg"
+            ],
+            "status": "En Stock",
+            "weight": "",
+            "category": "200CC",
+            "isActive": true,
+            "shipping": 1200,
+            "timestamp": 1777084781032,
+            "commission": 450,
+            "totalHabana": 4300,
+            "displacement": "200CC",
+            "stockByColor": [
+                {
+                    "vins": [
+                        {
+                            "vin": "HZ2TCDH57T1090243",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "HZ2TCDH54T1090376",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "WHITE",
+                    "quantity": 2
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "AZUL",
+                    "quantity": 7
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "HZ2TCDH50T1090083",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "NEGRO",
+                    "quantity": 6
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "HZ2TCDH53T1090157",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "HZ2TCDH50T1090231",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "ROJO",
+                    "quantity": 1
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "GRAY",
+                    "quantity": 5
+                }
+            ]
+        }
+    },
+    {
+        "data": {
+            "id": "STK-MODQE8RS-86NEES",
+            "name": "XMT 250CC",
+            "brand": "vitacci",
+            "power": "",
+            "total": 3500,
+            "engine": "",
+            "images": [
+                "bikes/STK-MODQE8RS-86NEES/photo_0_1777600331536.jpg"
+            ],
+            "status": "En Stock",
+            "weight": "",
+            "category": "250CC",
+            "isActive": true,
+            "shipping": 1400,
+            "timestamp": 1777084781032,
+            "commission": 500,
+            "totalHabana": 4600,
+            "displacement": "250CC",
+            "stockByColor": [
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFGH3SX124540",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "White",
+                    "quantity": 0
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFGH2SX129826",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGH7SX129823",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "",
+                            "note": "",
+                            "status": "available"
+                        }
+                    ],
+                    "color": "Red",
+                    "quantity": 5
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFGH8SX125974",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGH1SX125315",
+                            "note": null,
+                            "status": "available"
+                        }
+                    ],
+                    "color": "Blue",
+                    "quantity": 3
+                },
+                {
+                    "vins": [
+                        {
+                            "vin": "H0DPBFGH5SX125835",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGH5SX125270",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGH6SX124791",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGH8SX124453",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGH7SX125836",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGH7SX124797",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGH8SX124789",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGH9SX124462",
+                            "note": null,
+                            "status": "available"
+                        },
+                        {
+                            "vin": "H0DPBFGH3SX125834",
+                            "note": null,
+                            "status": "available"
+                        }
+                    ],
+                    "color": "Black",
+                    "quantity": 4
+                },
+                {
+                    "vins": [],
+                    "color": "NUEVO",
+                    "quantity": 0
+                }
+            ]
+        }
+    }
+]

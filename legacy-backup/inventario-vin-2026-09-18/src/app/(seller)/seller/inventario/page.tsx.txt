@@ -1,0 +1,12 @@
+import { PlaceholderPage } from "@/components/seller/placeholder-page";
+
+export const metadata = { title: "Inventario · Vendedor" };
+
+export default function SellerInventarioPage() {
+  return (
+    <PlaceholderPage
+      title="Inventario"
+      description="Stock disponible por modelo, color y ubicación, con estado de cada unidad."
+    />
+  );
+}

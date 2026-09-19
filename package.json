@@ -1,0 +1,49 @@
+{
+  "name": "motods",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "db:types": "supabase gen types typescript --linked > src/types/database.types.ts",
+    "db:pull": "supabase db pull",
+    "db:push": "supabase db push",
+    "seed:user": "node --env-file=.env.local supabase/scripts/create-user.mjs",
+    "test:ocr-parsers": "node --experimental-strip-types --import ./supabase/scripts/ts-alias-loader.mjs supabase/scripts/test-id-extraction-parsers.ts",
+    "test:e2e": "playwright test",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "test:admin-sales": "node --env-file=.env.local supabase/scripts/test-admin-sale-control.mjs",
+    "test:commissions": "node --env-file=.env.local supabase/scripts/test-commission-fixtures.mjs"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
+    "@zxing/library": "^0.23.0",
+    "next": "16.3.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-easy-crop": "^6.2.3",
+    "react-hook-form": "^7.87.0",
+    "server-only": "^0.0.1",
+    "tesseract.js": "^7.0.0",
+    "zod": "^3.25.76",
+    "zxing-wasm": "^3.1.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4",
+    "supabase": "^2.117.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

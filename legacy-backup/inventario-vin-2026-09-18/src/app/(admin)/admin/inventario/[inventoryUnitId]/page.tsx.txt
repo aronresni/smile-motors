@@ -1,0 +1,147 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getInventoryUnitDetail } from "@/lib/admin/inventory";
+import { ROUTES } from "@/lib/constants";
+import { InventoryVinEdit } from "@/components/admin/inventory/inventory-vin-edit";
+import { InventoryCommissionConfig } from "@/components/admin/inventory/inventory-commission-config";
+
+export const metadata: Metadata = { title: "Unidad de inventario · Admin" };
+export const dynamic = "force-dynamic";
+
+const STATUS_LABEL: Record<string, string> = {
+  AVAILABLE: "Disponible",
+  RESERVED: "Reservada",
+  SOLD: "Vendida",
+  UNAVAILABLE: "No disponible",
+};
+const EVENT_LABEL: Record<string, string> = {
+  UNIT_CREATED: "Unidad creada",
+  UNIT_IMPORTED: "Unidad importada",
+  VIN_UPDATED: "VIN corregido",
+  UNIT_RESERVED: "Reservada",
+  RESERVATION_RELEASED: "Reserva liberada",
+  UNIT_SOLD: "Vendida",
+  COMMISSION_CONFIG_UPDATED: "Configuración de comisión actualizada",
+};
+
+function formatDateTime(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("es-DO", { dateStyle: "medium", timeStyle: "short" }).format(d);
+}
+
+function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border p-4 border-border bg-surface">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-sm font-medium text-foreground">{value || "—"}</p>
+    </div>
+  );
+}
+
+export default async function AdminInventoryUnitDetailPage({
+  params,
+}: {
+  params: Promise<{ inventoryUnitId: string }>;
+}) {
+  const { inventoryUnitId } = await params;
+  const detail = await getInventoryUnitDetail(inventoryUnitId);
+  if (!detail) notFound();
+
+  const { unit, saleUnit, history } = detail;
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-4">
+      <div>
+        <Link href={ROUTES.adminInventario} className="text-xs text-muted-foreground hover:text-foreground">
+          ← Inventario
+        </Link>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <h1 className="font-mono text-xl font-semibold tracking-tight">{unit.vin ?? "Sin VIN"}</h1>
+          <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide border-border">
+            {STATUS_LABEL[unit.status] ?? unit.status}
+          </span>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          <Link href={`${ROUTES.adminProductos}/${unit.productId}`} className="hover:underline">{unit.productName}</Link>
+          {unit.variantName ? ` · ${unit.variantName}` : ""}
+        </p>
+      </div>
+
+      <Section title="Unidad" action={<InventoryVinEdit unitId={unit.id} productId={unit.productId} currentVin={unit.vin} status={unit.status} />}>
+        <div className="grid grid-cols-2 gap-3">
+          <Fact label="Producto" value={unit.productName} />
+          <Fact label="ID legado del producto" value={unit.productLegacyId ?? "—"} />
+          <Fact label="Variante" value={unit.variantName ?? "—"} />
+          <Fact label="Modo de stock" value={unit.stockMode === "on_demand" ? "Bajo pedido" : "Con stock físico"} />
+          <Fact label="Estado legado" value={unit.legacyStatus ?? "—"} />
+          <Fact label="Nota" value={unit.note ?? "—"} />
+          <Fact label="Creada / importada" value={formatDateTime(unit.createdAt)} />
+          <Fact label="Última actualización" value={formatDateTime(unit.updatedAt)} />
+        </div>
+      </Section>
+
+      <Section title="Configuración de comisión">
+        <InventoryCommissionConfig
+          unitId={unit.id}
+          referencePriceCents={unit.referencePriceCents}
+          baseCommissionCents={unit.baseCommissionCents}
+        />
+      </Section>
+
+      <Section title="Venta asociada">
+        {saleUnit ? (
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">{saleUnit.saleNumber ?? "Sin número"}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {saleUnit.saleStatus} {saleUnit.trackingCode ? `· Tracking: ${saleUnit.trackingCode}` : ""}
+              </p>
+            </div>
+            <Link
+              href={`${ROUTES.adminVentas}/${saleUnit.saleId}`}
+              className="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium border-border hover:bg-surface-elevated"
+            >
+              Ver venta
+            </Link>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">Sin venta asociada.</p>
+        )}
+      </Section>
+
+      <Section title="Historial de inventario">
+        {history.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Sin eventos registrados.</p>
+        ) : (
+          <ul className="space-y-2">
+            {history.map((e, i) => (
+              <li key={i} className="flex items-start justify-between gap-2 text-xs">
+                <span>
+                  <span className="font-medium text-text-secondary">{EVENT_LABEL[e.eventType] ?? e.eventType}</span>
+                  {e.fromStatus && e.toStatus && <span className="text-muted-foreground"> · {e.fromStatus} → {e.toStatus}</span>}
+                  {e.actorName && <span className="text-muted-foreground"> · {e.actorName}</span>}
+                  {e.reason && <span className="text-muted-foreground"> — {e.reason}</span>}
+                </span>
+                <span className="shrink-0 text-muted-foreground">{formatDateTime(e.createdAt)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+    </div>
+  );
+}

@@ -1,0 +1,117 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/form-fields";
+import { formatCents, parseAmountToCents, centsToInputvalue } from "@/lib/money";
+import { commissionActionErrorText } from "@/lib/admin/commissions-errors";
+import { updateInventoryCommissionConfig } from "@/app/(admin)/admin/comisiones/actions";
+
+function previewCommission(referenceCents: number, baseCents: number, saleCents: number) {
+  const diff = saleCents - referenceCents;
+  const share = Math.trunc(diff / 2);
+  const final = Math.max(0, baseCents + share);
+  return { diff, share, final };
+}
+
+/** "CONFIGURACIÓN DE COMISIÓN" — precio de referencia + comisión base de
+ * ESTA unidad física. Cambios afectan SOLO comisiones futuras; una venta
+ * ya calculada guarda su propio snapshot inmutable. */
+export function InventoryCommissionConfig({
+  unitId,
+  referencePriceCents,
+  baseCommissionCents,
+}: {
+  unitId: string;
+  referencePriceCents: number | null;
+  baseCommissionCents: number | null;
+}) {
+  const router = useRouter();
+  const [refDollars, setRefDollars] = useState(centsToInputvalue(referencePriceCents ?? 0));
+  const [baseDollars, setBaseDollars] = useState(centsToInputvalue(baseCommissionCents ?? 0));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const refCents = parseAmountToCents(refDollars);
+  const baseCents = parseAmountToCents(baseDollars);
+  const configured = referencePriceCents != null && baseCommissionCents != null;
+
+  const previews = useMemo(() => {
+    if (refCents <= 0 && baseCents <= 0) return null;
+    return {
+      atReference: previewCommission(refCents, baseCents, refCents),
+      plus500: previewCommission(refCents, baseCents, refCents + 50000),
+      minus500: previewCommission(refCents, baseCents, refCents - 50000),
+    };
+  }, [refCents, baseCents]);
+
+  const submit = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setSaved(false);
+    const res = await updateInventoryCommissionConfig(unitId, refCents, baseCents);
+    if (!res.ok) {
+      setError(commissionActionErrorText(res.code));
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    setSaved(true);
+    router.refresh();
+  };
+
+  return (
+    <div className="space-y-3">
+      {!configured && (
+        <p className="rounded-lg border px-3 py-2 text-xs border-warning/30 bg-warning/10 text-warning">
+          Sin configurar — esta unidad no podrá venderse (pasar a VENDIDA) hasta que se configure.
+        </p>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        <TextField
+          label="Precio de referencia para comisión"
+          type="number"
+          min={0}
+          step="0.01"
+          value={refDollars}
+          onChange={(e) => setRefDollars(e.target.value)}
+        />
+        <TextField
+          label="Comisión base"
+          type="number"
+          min={0}
+          step="0.01"
+          value={baseDollars}
+          onChange={(e) => setBaseDollars(e.target.value)}
+        />
+      </div>
+
+      {previews && (
+        <div className="grid grid-cols-3 gap-2 rounded-lg p-3 text-xs bg-surface-muted">
+          <div>
+            <p className="text-muted-foreground">Si se vende al precio de referencia</p>
+            <p className="mt-0.5 font-medium tabular-nums">{formatCents(previews.atReference.final)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Si se vende +$500</p>
+            <p className="mt-0.5 font-medium tabular-nums text-success">{formatCents(previews.plus500.final)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Si se vende -$500</p>
+            <p className="mt-0.5 font-medium tabular-nums text-warning">{formatCents(previews.minus500.final)}</p>
+          </div>
+        </div>
+      )}
+
+      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+      {saved && !error && <p className="text-xs text-success">Configuración guardada.</p>}
+
+      <Button variant="primary" size="sm" onClick={() => void submit()} disabled={busy}>
+        {busy ? "Guardando…" : "Guardar configuración"}
+      </Button>
+    </div>
+  );
+}

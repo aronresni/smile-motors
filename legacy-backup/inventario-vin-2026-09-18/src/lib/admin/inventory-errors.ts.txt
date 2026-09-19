@@ -1,0 +1,23 @@
+/** Códigos de las acciones de administración de inventario → mensaje simple. */
+const MESSAGES: Record<string, string> = {
+  NOT_AUTHENTICATED: "Tu sesión no es válida. Inicia sesión de nuevo.",
+  NOT_ADMIN: "Solo un administrador puede realizar esta acción.",
+  VIN_REQUIRED: "El VIN es obligatorio.",
+  VIN_DUPLICATE: "Ese VIN ya existe en el inventario.",
+  PRODUCT_NOT_FOUND: "No encontramos este producto.",
+  VARIANT_MISMATCH: "La variante no pertenece a este producto.",
+  UNIT_NOT_FOUND: "No encontramos esta unidad de inventario.",
+  REASON_REQUIRED: "Debes indicar un motivo para esta corrección.",
+  SALE_UNIT_NOT_FOUND: "No encontramos esta unidad de venta.",
+  ALREADY_ASSIGNED: "Esta unidad de venta ya tiene un VIN asignado.",
+  PRODUCT_VARIANT_MISMATCH: "Ese VIN pertenece a otro producto o variante.",
+  VIN_NOT_AVAILABLE: "Ese VIN ya no está disponible (lo reservó otra persona).",
+  NOT_ASSIGNED: "Esta unidad de venta no tiene un VIN asignado.",
+  NOT_RELEASABLE: "Solo se puede liberar un VIN que esté reservado.",
+  UNEXPECTED: "No se pudo completar la acción. Intenta de nuevo.",
+};
+
+export function inventoryActionErrorText(code: string | undefined): string {
+  if (!code) return MESSAGES.UNEXPECTED;
+  return MESSAGES[code] ?? MESSAGES.UNEXPECTED;
+}
