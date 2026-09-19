@@ -61,13 +61,76 @@ async function login(page: Page) {
 
 /** Sube un archivo a un `DocumentUploader` (input oculto) y confirma el
  * recorte (modal "Guardar") — el mismo flujo real que usa el vendedor. */
-async function uploadDocument(page: Page, fileInput: ReturnType<Page["locator"]>, buffer: Buffer, name: string) {
-  await fileInput.setInputFiles({ name, mimeType: "image/png", buffer });
+async function uploadDocument(
+  page: Page,
+  fileInput: ReturnType<Page["locator"]>,
+  buffer: Buffer,
+  name: string,
+  mimeType = "image/png",
+) {
+  await fileInput.setInputFiles({ name, mimeType, buffer });
   const saveButton = page.getByRole("button", { name: "Guardar", exact: true });
   await expect(saveButton).toBeVisible({ timeout: 10_000 });
   await saveButton.click();
   await expect(saveButton).toBeHidden({ timeout: 10_000 });
 }
+
+test.describe("Nueva venta (Cuba) — fotos desde la galería", () => {
+  test("el selector abre la GALERÍA por defecto; la cámara solo con 'Tomar foto con la cámara'", async ({ page }) => {
+    const { front } = await generateFixtureDataUrls(page, "us-license");
+    await login(page);
+    await page.goto("/seller/ventas/nueva/cuba");
+    const buyer = page.locator("#section-buyer");
+    await expect(buyer).toBeVisible({ timeout: 15_000 });
+
+    // Sin `capture`, el móvil ofrece la galería/archivos en vez de la cámara.
+    let chooser = page.waitForEvent("filechooser");
+    await buyer.getByRole("button", { name: /Elegir foto de la galería/ }).first().click();
+    expect(await (await chooser).element().getAttribute("capture")).toBeNull();
+
+    // La cámara sigue disponible, pero solo si el vendedor la pide.
+    chooser = page.waitForEvent("filechooser");
+    await buyer.getByRole("button", { name: "Tomar foto con la cámara" }).first().click();
+    const cameraChooser = await chooser;
+    expect(await cameraChooser.element().getAttribute("capture")).toBe("environment");
+
+    // Completa la subida por ese mismo selector y confirma el recorte.
+    await cameraChooser.setFiles({ name: "front.png", mimeType: "image/png", buffer: await dataUrlToBuffer(front) });
+    const saveButton = page.getByRole("button", { name: "Guardar", exact: true });
+    await saveButton.click();
+    await expect(saveButton).toBeHidden({ timeout: 10_000 });
+
+    // "Reemplazar" vuelve a la galería (el atributo no queda pegado).
+    chooser = page.waitForEvent("filechooser");
+    await buyer.getByRole("button", { name: "Reemplazar" }).first().click();
+    expect(await (await chooser).element().getAttribute("capture")).toBeNull();
+  });
+
+  test("comprador: foto COMPRIMIDA de la galería del reverso (baja resolución) → los 9 campos exactos", async ({ page }) => {
+    await page.goto("/dev/ocr-fixtures");
+    await page.getByTestId("us-license-generate-synthetic-lowres").click();
+    const section = page.getByTestId("us-license");
+    await expect(section.getByText("Quitar")).toHaveCount(1, { timeout: 20_000 });
+    const back = await section.getByAltText("Reverso").getAttribute("src");
+    if (!back) throw new Error("No se generó el reverso sintético");
+
+    await login(page);
+    await page.goto("/seller/ventas/nueva/cuba");
+    await expect(page.locator("#section-buyer")).toBeVisible({ timeout: 15_000 });
+    const inputs = page.locator("#section-buyer input[type='file']");
+    await uploadDocument(page, inputs.nth(1), await dataUrlToBuffer(back), "reverso.jpg", "image/jpeg");
+
+    await expect(page.locator('input[name="buyer.firstName"]')).toHaveValue("Rolando", { timeout: 45_000 });
+    await expect(page.locator('input[name="buyer.lastName"]')).toHaveValue("Quintana Bermudez");
+    await expect(page.locator('input[name="buyer.documentNumber"]')).toHaveValue("R512448907710");
+    await expect(page.locator('input[name="buyer.dateOfBirth"]')).toHaveValue("1971-07-09");
+    await expect(page.locator('input[name="buyer.documentExpiration"]')).toHaveValue("2032-07-09");
+    await expect(page.locator('input[name="buyer.addressLine1"]')).toHaveValue("2280 Sunset Palm Way");
+    await expect(page.locator('input[name="buyer.city"]')).toHaveValue("Kissimmee");
+    await expect(page.locator('select[name="buyer.state"]')).toHaveValue("FL");
+    await expect(page.locator('input[name="buyer.postalCode"]')).toHaveValue("34746");
+  });
+});
 
 test.describe("Nueva venta (Cuba) — autocompletado real desde documentos", () => {
   test("comprador: sube ID de EE. UU. sintético → los campos de React Hook Form se autocompletan", async ({ page }) => {

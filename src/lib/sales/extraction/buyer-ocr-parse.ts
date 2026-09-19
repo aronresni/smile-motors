@@ -37,7 +37,7 @@ export function parseUsLicenseText(
     );
   if (dobMatch) {
     const iso = normalizeLooseDate(dobMatch[1]);
-    if (iso) {
+    if (iso && yearsFromNow(iso) <= -14 && yearsFromNow(iso) >= -110) {
       data.dateOfBirth = iso;
       fieldConfidence.dateOfBirth = baseConfidence * 0.9;
     }
@@ -49,7 +49,8 @@ export function parseUsLicenseText(
     );
   if (expMatch) {
     const iso = normalizeLooseDate(expMatch[1]);
-    if (iso) {
+    // Una licencia vence a lo sumo ~15 años después; "2081" es un "2031" mal leído.
+    if (iso && yearsFromNow(iso) <= 15 && yearsFromNow(iso) >= -15) {
       data.expirationDate = iso;
       fieldConfidence.expirationDate = baseConfidence * 0.85;
     }
@@ -62,6 +63,16 @@ export function parseUsLicenseText(
   if (dlMatch) {
     data.documentNumber = dlMatch[1].toUpperCase();
     fieldConfidence.documentNumber = baseConfidence * 0.7;
+  } else {
+    // Formato con guiones, sin depender de la etiqueta (que el OCR suele
+    // leer mal): letra + grupos de dígitos, p. ej. Florida "A123-456-78-901-2".
+    // Se guarda sin guiones, igual que lo trae el PDF417 (DAQ).
+    const grouped = /([A-Z])[\s-]?(\d{3,4}(?:-\d{1,4}){2,4})(?![\d-])/.exec(upper);
+    const digits = grouped ? grouped[2].replace(/-/g, "") : "";
+    if (grouped && digits.length >= 8 && digits.length <= 14) {
+      data.documentNumber = `${grouped[1]}${digits}`;
+      fieldConfidence.documentNumber = baseConfidence * 0.7;
+    }
   }
 
   for (let i = 0; i < lines.length; i++) {
@@ -134,7 +145,10 @@ export function parseUsLicenseText(
   // Estrategia 3 (último recurso, confianza baja): dos líneas cortas
   // consecutivas de solo letras, tras descartar encabezados/etiquetas
   // conocidas — el orden impreso habitual es apellido(s) y luego nombre(s).
-  if (!data.lastName && !data.firstName) {
+  // Solo con un OCR razonablemente limpio: con una foto difícil (holograma,
+  // reflejo) adivinaba basura como "Florida Orverucense" — mejor dejar el
+  // campo vacío que autocompletar un nombre falso.
+  if (!data.lastName && !data.firstName && baseConfidence >= MIN_GUESS_CONFIDENCE) {
     const guess = guessNameFromPlainLines(lines);
     if (guess) {
       data.lastName = titleCase(guess.lastName);
@@ -147,10 +161,28 @@ export function parseUsLicenseText(
   return { data, fieldConfidence };
 }
 
+/** Confianza OCR mínima para el último recurso (adivinar el nombre por
+ * líneas sueltas). */
+const MIN_GUESS_CONFIDENCE = 0.6;
+
+/** Años (con signo) entre hoy y una fecha ISO; negativo = en el pasado. */
+function yearsFromNow(iso: string): number {
+  return (Date.parse(iso) - Date.now()) / (365.25 * 24 * 3600 * 1000);
+}
+
 /** Palabras que nunca son parte de un nombre — encabezados/etiquetas del
  * frente de una licencia de EE. UU. (genérico, no específico de un estado). */
 const NON_NAME_WORDS =
   /^(USA|UNITED|STATES|DRIVER|DRIVERS|LICENSE|LICENCE|IDENTIFICATION|ID|CARD|CLASS|SEX|HGT|WGT|EYES|HAIR|DONOR|VETERAN|END|RESTRICTIONS?|REST|ISS|EXP|DOB|DL|LN|FN|DD)$/;
+
+/** Fragmentos de etiquetas que delatan una lectura corrupta aunque el OCR
+ * les pegue letras ("SCLASSE", "ORVERLICENSE"). */
+const LABEL_FRAGMENTS = /(DRIVER|LICEN[CS]E|CLASS|DONOR|VETERAN|RESTRICT|ENDORSE|IDENTIFICATION)/;
+
+/** Nombre de algún estado como palabra completa dentro de la línea. */
+const STATE_NAME_IN_LINE = new RegExp(
+  `\\b(${[...STATE_NAMES].map((n) => n.replace(/\s+/g, "\\s+")).join("|")})\\b`,
+);
 
 /**
  * Busca una línea de la forma "<número><separador opcional><VALOR>" (p. ej.
@@ -178,7 +210,11 @@ function isPlausibleNameToken(token: string): boolean {
   if (t.length < 2 || t.length > 30) return false;
   if (!/^[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ'\- ]*$/i.test(t)) return false;
   const upperT = t.toUpperCase();
+  // Las licencias imprimen los nombres en MAYÚSCULAS: minúsculas en la
+  // lectura ("scLassE", "Florida orverucene") indican OCR corrupto.
+  if (t !== upperT) return false;
   if (STATE_NAMES.has(upperT)) return false;
+  if (LABEL_FRAGMENTS.test(upperT)) return false;
   // Ninguna palabra de la línea puede ser un encabezado/etiqueta conocido —
   // así se descarta también "DRIVER'S LICENSE" (dos palabras, con o sin
   // apóstrofo), no solo cada una por separado.
@@ -203,7 +239,9 @@ function guessNameFromPlainLines(
 ): { lastName: string; firstName: string } | null {
   const candidates = lines
     .slice(0, 12) // el bloque de nombre suele estar cerca del encabezado
-    .filter((l) => isPlausibleNameToken(l) && !/\d/.test(l));
+    .filter(
+      (l) => isPlausibleNameToken(l) && !/\d/.test(l) && !STATE_NAME_IN_LINE.test(l.toUpperCase()),
+    );
   for (let i = 0; i < candidates.length - 1; i++) {
     return { lastName: candidates[i], firstName: candidates[i + 1] };
   }

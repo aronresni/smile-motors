@@ -383,21 +383,49 @@ export async function lowerBandRegion(
 }
 
 /**
+ * Enfoque (unsharp mask 3×3) in-place sobre RGBA. Tras ampliar una foto de
+ * baja resolución, recupera el borde de las barras finas del PDF417 que la
+ * interpolación suaviza.
+ */
+function sharpenRgba(imageData: ImageData, amount = 1): void {
+  const { width, height, data } = imageData;
+  const src = new Uint8ClampedArray(data);
+  const center = 1 + 4 * amount;
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = (y * width + x) * 4;
+      const up = i - width * 4;
+      const down = i + width * 4;
+      for (let c = 0; c < 3; c++) {
+        data[i + c] =
+          center * src[i + c] -
+          amount * (src[i - 4 + c] + src[i + 4 + c] + src[up + c] + src[down + c]);
+      }
+    }
+  }
+}
+
+/**
  * Rasteriza a `ImageData` en COLOR (RGBA, sin conversión a escala de grises)
  * para el decodificador ZXing-C++/WASM — su propio binarizador interno hace
  * un mejor trabajo que preprocesar nosotros mismos, así que aquí solo se
  * ajusta resolución y (opcionalmente) se recorta a un sub-rectángulo.
+ *
+ * `upscale` > 1 AMPLÍA la fuente (sin pasar de `maxDim`): las fotos
+ * comprimidas (p. ej. reenviadas por WhatsApp) dejan el PDF417 a ~1 px por
+ * módulo, por debajo de lo que el decodificador resuelve; ampliado 2–3× con
+ * interpolación de calidad (y `sharpen`) vuelve a ser legible.
  */
 export async function toRgbaImageData(
   dataUrl: string,
-  opts: { maxDim?: number; sourceRect?: PixelRect } = {},
+  opts: { maxDim?: number; sourceRect?: PixelRect; upscale?: number; sharpen?: boolean } = {},
 ): Promise<ImageData> {
-  const { maxDim = 2600, sourceRect } = opts;
+  const { maxDim = 2600, sourceRect, upscale = 1, sharpen = false } = opts;
   const image = await loadImage(dataUrl);
   const srcW = sourceRect ? sourceRect.width : image.naturalWidth || image.width;
   const srcH = sourceRect ? sourceRect.height : image.naturalHeight || image.height;
   const longest = Math.max(srcW, srcH);
-  const scale = longest > maxDim ? maxDim / longest : 1;
+  const scale = Math.min(upscale, maxDim / longest);
   const width = Math.max(1, Math.round(srcW * scale));
   const height = Math.max(1, Math.round(srcH * scale));
 
@@ -406,6 +434,8 @@ export async function toRgbaImageData(
   canvas.height = height;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("canvas_unavailable");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
   if (sourceRect) {
     ctx.drawImage(
       image,
@@ -415,7 +445,9 @@ export async function toRgbaImageData(
   } else {
     ctx.drawImage(image, 0, 0, width, height);
   }
-  return ctx.getImageData(0, 0, width, height);
+  const imageData = ctx.getImageData(0, 0, width, height);
+  if (sharpen) sharpenRgba(imageData);
+  return imageData;
 }
 
 /**

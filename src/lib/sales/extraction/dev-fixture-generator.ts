@@ -153,6 +153,108 @@ export function generateSyntheticCubanFrontImage(): string {
   ]);
 }
 
+/**
+ * Payload con el formato COMPLETO de una licencia real (inventado): separador
+ * de registro (RS) y retorno de carro en la cabecera, el primer elemento
+ * (DAQ) PEGADO a la cabecera, segundo nombre "NONE" y ~30 elementos, como el
+ * de Florida. Cubre las tres trampas que dejaban el formulario vacío con una
+ * licencia real: modo de texto del lector, DAQ en la cabecera y "NONE".
+ */
+const SYNTHETIC_AAMVA_FULL_PAYLOAD =
+  "@\n\x1e\rANSI 636010090002DL00410330ZF03710047DLDAQR512448907710\n" +
+  [
+    "DCSQUINTANA BERMUDEZ",
+    "DDEN",
+    "DACROLANDO",
+    "DDFN",
+    "DADNONE",
+    "DDGN",
+    "DCAE",
+    "DCBNONE",
+    "DCDNONE",
+    "DBD04152024",
+    "DBB07091971",
+    "DBA07092032",
+    "DBC1",
+    "DAU070 IN",
+    "DAG2280 SUNSET PALM WAY",
+    "DAIKISSIMMEE",
+    "DAJFL",
+    "DAK347461234  ",
+    "DCFR512448907710415",
+    "DCGUSA",
+    "DCK0000123456789012",
+    "DDAF",
+    "DDB03012020",
+    "DDK1",
+  ].join("\n") +
+  "\r" +
+  ["ZFZFA", "ZFB", "ZFCSAFE DRIVER", "ZFD", "ZFE", "ZFF", "ZFG", "ZFH", "ZFI", "ZFJ1234567890", "ZFK"].join(
+    "\n",
+  ) +
+  "\r";
+
+export const SYNTHETIC_AAMVA_FULL_EXPECTED = {
+  firstName: "Rolando",
+  lastName: "Quintana Bermudez",
+  documentNumber: "R512448907710",
+  dateOfBirth: "1971-07-09",
+  expirationDate: "2032-07-09",
+  addressLine1: "2280 Sunset Palm Way",
+  city: "Kissimmee",
+  state: "FL",
+  postalCode: "34746",
+};
+
+/**
+ * Reverso SINTÉTICO como llega una foto COMPRIMIDA de la galería (p. ej.
+ * reenviada por WhatsApp): el PDF417 queda a ~1,3 px por módulo, la tarjeta
+ * ocupa una parte de una foto vertical con fondo de color y todo se
+ * recomprime en JPEG. Sin ampliar la región, ningún decodificador lo lee.
+ */
+export async function generateSyntheticUsBackLowResImage(): Promise<string> {
+  const { prepareZXingModule, writeBarcode } = await import("zxing-wasm/writer");
+  prepareZXingModule({ overrides: { locateFile: (path: string) => `/zxing/${path}` } });
+  const { image } = await writeBarcode(SYNTHETIC_AAMVA_FULL_PAYLOAD, {
+    format: "PDF417",
+    scale: 1,
+  });
+  if (!image) throw new Error("No se pudo generar el PDF417 sintético");
+  const barcode = new Image();
+  await new Promise<void>((resolve, reject) => {
+    barcode.onload = () => resolve();
+    barcode.onerror = () => reject(new Error("image_load_failed"));
+    barcode.src = URL.createObjectURL(image);
+  });
+
+  const photo = document.createElement("canvas");
+  photo.width = 900;
+  photo.height = 1600;
+  const ctx = photo.getContext("2d");
+  if (!ctx) throw new Error("canvas_unavailable");
+  ctx.fillStyle = "#5b2a86"; // fondo (mesa / tela)
+  ctx.fillRect(0, 0, photo.width, photo.height);
+  const card = { x: 10, y: 170, w: 790, h: 500 };
+  ctx.fillStyle = "#f4f4f1";
+  ctx.fillRect(card.x, card.y, card.w, card.h);
+  ctx.fillStyle = "#222";
+  ctx.font = "16px sans-serif";
+  ctx.fillText("CLASS: E - Any non-commercial vehicle", card.x + 200, card.y + 280);
+  ctx.fillText("REST: None      END: None", card.x + 200, card.y + 320);
+  const moduleScale = 1.3;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(
+    barcode,
+    card.x + 150,
+    card.y + 25,
+    barcode.width * moduleScale,
+    barcode.height * moduleScale,
+  );
+  URL.revokeObjectURL(barcode.src);
+  return photo.toDataURL("image/jpeg", 0.72);
+}
+
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

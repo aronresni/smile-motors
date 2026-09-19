@@ -11,7 +11,11 @@
  * `/zxing/zxing_reader.wasm` (esta misma app, ver `public/zxing/README.md`).
  * Ningún archivo sale a un CDN de terceros en tiempo de ejecución.
  */
-import { toRgbaImageData, type PixelRect } from "@/lib/sales/extraction/image-preprocess";
+import {
+  getImageDimensions,
+  toRgbaImageData,
+  type PixelRect,
+} from "@/lib/sales/extraction/image-preprocess";
 import type { Pdf417AttemptDebug } from "@/lib/sales/types";
 
 let configured = false;
@@ -41,6 +45,10 @@ export interface Pdf417WasmDecodeResult {
  *   1. Imagen completa (siempre se intenta primero, nunca se salta).
  *   2. Región candidata (si `locateBarcodeRegion` encontró una) — optimización
  *      para fotos con fondo amplio, NUNCA obligatoria.
+ *   3. Región AMPLIADA 2×/3× (con y sin enfoque) y, en fotos pequeñas, la
+ *      imagen completa 3× — para fotos comprimidas (galería, WhatsApp) en las
+ *      que el código queda a ~1 px por módulo: sin ampliar, ningún
+ *      decodificador lo resuelve (confirmado con una licencia real).
  */
 export async function decodePdf417Wasm(
   dataUrl: string,
@@ -56,11 +64,26 @@ export async function decodePdf417Wasm(
     return { text: null, attempts };
   }
 
-  const passes: { name: string; sourceRect?: PixelRect; maxDim: number }[] = [
-    { name: "wasm:whole", maxDim: 2800 },
-  ];
+  const passes: {
+    name: string;
+    sourceRect?: PixelRect;
+    maxDim: number;
+    upscale?: number;
+    sharpen?: boolean;
+  }[] = [{ name: "wasm:whole", maxDim: 2800 }];
   if (region) {
-    passes.push({ name: "wasm:region", sourceRect: region, maxDim: 2400 });
+    passes.push(
+      { name: "wasm:region", sourceRect: region, maxDim: 2400 },
+      { name: "wasm:region-2x-sharpen", sourceRect: region, maxDim: 4000, upscale: 2, sharpen: true },
+      { name: "wasm:region-3x", sourceRect: region, maxDim: 4000, upscale: 3 },
+      { name: "wasm:region-3x-sharpen", sourceRect: region, maxDim: 4000, upscale: 3, sharpen: true },
+    );
+  }
+  // Imagen completa ampliada: solo si es pequeña (una foto grande ya tiene
+  // resolución de sobra y ampliarla solo gastaría memoria).
+  const dims = await getImageDimensions(dataUrl).catch(() => null);
+  if (dims && Math.max(dims.width, dims.height) <= 1800) {
+    passes.push({ name: "wasm:whole-3x-sharpen", maxDim: 5400, upscale: 3, sharpen: true });
   }
 
   for (const pass of passes) {
@@ -68,11 +91,18 @@ export async function decodePdf417Wasm(
       const imageData = await toRgbaImageData(dataUrl, {
         maxDim: pass.maxDim,
         sourceRect: pass.sourceRect,
+        upscale: pass.upscale,
+        sharpen: pass.sharpen,
       });
       const results = await readBarcodes(imageData, {
         formats: ["PDF417"],
         tryHarder: true,
         maxNumberOfSymbols: 1,
+        // "Plain": los separadores AAMVA (LF/RS/CR) llegan como caracteres de
+        // control. El modo por defecto (HRI) los convierte en el texto
+        // literal "<LF>"/"<RS>" cuando el símbolo tiene bytes de control, y el
+        // parser no encontraba ningún campo (licencia real de Florida).
+        textMode: "Plain",
       });
       const text = results[0]?.text || null;
       const success = Boolean(text && text.length > 20);

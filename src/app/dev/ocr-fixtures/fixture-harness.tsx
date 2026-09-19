@@ -190,6 +190,7 @@ function DocumentSection<T>({
   run,
   testId,
   generateSynthetic,
+  generateSyntheticLowRes,
 }: {
   title: string;
   checklist: string[];
@@ -200,6 +201,9 @@ function DocumentSection<T>({
    * `dev-fixture-generator.ts`. Usado por la prueba E2E y para depuración
    * manual rápida. */
   generateSynthetic?: () => Promise<{ front: string; back: string }>;
+  /** Solo el REVERSO, como una foto comprimida de la galería (baja
+   * resolución) — el caso real que dejaba el formulario vacío. */
+  generateSyntheticLowRes?: () => Promise<string>;
 }) {
   const [front, setFront] = useState<string | null>(null);
   const [back, setBack] = useState<string | null>(null);
@@ -224,6 +228,18 @@ function DocumentSection<T>({
       const { front: f, back: b } = await generateSynthetic();
       setFront(f);
       setBack(b);
+      setResult(null);
+    } finally {
+      setGenBusy(false);
+    }
+  };
+
+  const generateLowRes = async () => {
+    if (!generateSyntheticLowRes) return;
+    setGenBusy(true);
+    try {
+      setFront(null);
+      setBack(await generateSyntheticLowRes());
       setResult(null);
     } finally {
       setGenBusy(false);
@@ -259,6 +275,17 @@ function DocumentSection<T>({
             className="rounded-lg border border-border-strong px-3 py-1.5 text-xs font-medium text-text-secondary disabled:opacity-40"
           >
             {genBusy ? "Generando…" : "Generar fixture sintética"}
+          </button>
+        )}
+        {generateSyntheticLowRes && (
+          <button
+            type="button"
+            onClick={() => void generateLowRes()}
+            disabled={genBusy}
+            data-testid={`${testId}-generate-synthetic-lowres`}
+            className="rounded-lg border border-border-strong px-3 py-1.5 text-xs font-medium text-text-secondary disabled:opacity-40"
+          >
+            Reverso sintético de baja resolución
           </button>
         )}
       </div>
@@ -305,6 +332,12 @@ export function OcrFixtureHarness() {
             Promise.resolve(generateSyntheticUsFrontImage()),
           ]);
           return { front, back };
+        }}
+        generateSyntheticLowRes={async () => {
+          const { generateSyntheticUsBackLowResImage } = await import(
+            "@/lib/sales/extraction/dev-fixture-generator"
+          );
+          return generateSyntheticUsBackLowResImage();
         }}
       />
 

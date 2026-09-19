@@ -78,6 +78,15 @@ test.describe("Fotos REALES (aceptación)", () => {
     const fieldsMatch = /Campos detectados:\s*\n?(\d+)/.exec(resultText);
     const fieldCount = fieldsMatch ? Number(fieldsMatch[1]) : 0;
     expect(fieldCount, "debe haber al menos un campo detectado").toBeGreaterThan(0);
+
+    // El reverso (foto comprimida) debe leerse por PDF417: los 9 campos del
+    // comprador, todos de origen "pdf417" (sin comparar valores personales).
+    const [, sourcesJson] = await resultPanel.locator("pre").allInnerTexts();
+    const sources = JSON.parse(sourcesJson) as Record<string, string>;
+    expect(Object.keys(sources).sort()).toEqual(
+      ["addressLine1", "city", "dateOfBirth", "documentNumber", "expirationDate", "firstName", "lastName", "postalCode", "state"],
+    );
+    expect(Object.values(sources).every((s) => s === "pdf417")).toBe(true);
   });
 
   test("US real: formulario REAL de Nueva Venta con las fotos reales del Florida DL", async ({ page }) => {
@@ -129,7 +138,9 @@ test.describe("Fotos REALES (aceptación)", () => {
     console.log(Object.fromEntries(Object.entries(values).map(([k, v]) => [k, v ? "✓ poblado" : "— vacío"])));
 
     const populatedCount = Object.values(values).filter(Boolean).length;
-    expect(populatedCount, "el formulario no debe quedar completamente vacío").toBeGreaterThan(0);
+    expect(populatedCount, "los 9 campos del comprador se completan desde el PDF417").toBe(9);
+    // "NONE" es el marcador AAMVA de "sin segundo nombre": nunca debe aparecer.
+    expect(values.firstName).not.toMatch(/\bNone\b/i);
   });
 
   test("Cuba real: /dev/ocr-fixtures con las fotos reales del carné", async ({ page }) => {
@@ -152,6 +163,16 @@ test.describe("Fotos REALES (aceptación)", () => {
     const fieldsMatch = /Campos detectados:\s*\n?(\d+)/.exec(resultText);
     const fieldCount = fieldsMatch ? Number(fieldsMatch[1]) : 0;
     expect(fieldCount, "debe haber al menos un campo detectado").toBeGreaterThan(0);
+
+    // NI y nombre desde la zona legible del reverso; el relleno "<<<" mal
+    // leído como letras ("K LLLLLLLL") nunca entra en el nombre.
+    const [dataJson, sourcesJson] = await resultPanel.locator("pre").allInnerTexts();
+    const data = JSON.parse(dataJson) as Record<string, string>;
+    const sources = JSON.parse(sourcesJson) as Record<string, string>;
+    expect(data.identityNumber).toMatch(/^\d{11}$/);
+    expect(sources.identityNumber).toBe("mrz-back");
+    expect(sources.fullName).toBe("mrz-back");
+    expect(data.fullName).not.toMatch(/(\p{L})\1{2,}|\b\p{L}\b/u);
   });
 
   test("Cuba real: formulario REAL de Nueva Venta con las fotos reales del carné", async ({ page }) => {

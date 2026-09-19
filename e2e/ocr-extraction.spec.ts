@@ -69,6 +69,42 @@ test.describe("Extracción local de documentos", () => {
     ).toEqual([]);
   });
 
+  test("EE. UU.: foto COMPRIMIDA de la galería (PDF417 a ~1,3 px por módulo) → se lee ampliando la región; 9 campos exactos", async ({ page }) => {
+    await page.goto("/dev/ocr-fixtures");
+    await page.getByTestId("us-license-generate-synthetic-lowres").click();
+    await expect(page.getByTestId("us-license").getByText("Quitar")).toHaveCount(1, { timeout: 20_000 });
+
+    await page.getByTestId("us-license-extract").click();
+    const resultPanel = page.getByTestId("us-license-result");
+    await expect(resultPanel.getByText("Veredicto final:")).toBeVisible({ timeout: 60_000 });
+    const resultText = await resultPanel.innerText();
+    const [data, sources, debug] = await resultPanel.locator("pre").allInnerTexts();
+
+    // Reproduce el caso real: a resolución nativa ningún pase lee el código;
+    // uno AMPLIADO sí (sin ampliar, el formulario quedaba vacío).
+    const attempts = (JSON.parse(debug).pdf417Attempts ?? []) as { pass: string; success: boolean }[];
+    expect(attempts.find((a) => a.pass === "wasm:whole")?.success).toBe(false);
+    expect(attempts.some((a) => a.success && /-\dx/.test(a.pass))).toBe(true);
+    expect(resultText).toContain("SUCCESS");
+
+    // Los 9 campos, exactos (valores inventados del generador). El payload
+    // trae las trampas de una licencia real: separadores de control (el
+    // lector debe devolverlos como tales, no como "<LF>"), el N.º pegado a la
+    // cabecera y el segundo nombre "NONE" (no debe sumarse al nombre).
+    expect(JSON.parse(data)).toEqual({
+      firstName: "Rolando",
+      lastName: "Quintana Bermudez",
+      documentNumber: "R512448907710",
+      dateOfBirth: "1971-07-09",
+      expirationDate: "2032-07-09",
+      addressLine1: "2280 Sunset Palm Way",
+      city: "Kissimmee",
+      state: "FL",
+      postalCode: "34746",
+    });
+    expect(Object.values(JSON.parse(sources)).every((s) => s === "pdf417")).toBe(true);
+  });
+
   test("EE. UU.: sin reverso (solo frente) → OCR local puebla los campos (nunca ERROR con campos vacíos)", async ({ page }) => {
     const externalRequests: string[] = [];
     page.on("request", (req) => {

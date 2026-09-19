@@ -15,7 +15,7 @@
  * busca patrones distintivos sobre el texto reconstruido completo:
  *   - un carné cubano siempre indica el número de identidad (NI) como una
  *     corrida de 11 dígitos consecutivos;
- *   - la fecha de nacimiento / vencimiento aparecen como `YYMMDD` + sexo
+ *   - la fecha de nacimiento / vencimiento aparecen como `YYMMDD` [+ control] + sexo
  *     (M/F) + `YYMMDD`;
  *   - la línea de nombre usa el patrón `APELLIDO(S)<<NOMBRE(S)` con `<` como
  *     separador de palabra y `<<` como separador de bloque.
@@ -90,6 +90,20 @@ function parseIdentityNumber(lines: string[]): string | null {
   return isolated ? isolated[1] : null;
 }
 
+/**
+ * El relleno `<<<<<<` del final de la línea de nombre a veces se lee como
+ * letras ("YANELIS<K<LLLLLLLL"): una "palabra" de 3+ letras iguales no es un
+ * nombre. Se descarta desde ahí hasta el final, junto con una letra suelta
+ * justo antes (otro `<` mal leído).
+ */
+function dropFillerMisreads(tokens: string[]): string[] {
+  const garbage = tokens.findIndex((t) => /^(.)\1{2,}$/.test(t));
+  if (garbage === -1) return tokens;
+  let end = garbage;
+  if (end > 0 && tokens[end - 1].length === 1) end -= 1;
+  return tokens.slice(0, end);
+}
+
 function parseNameLine(lines: string[]): string | null {
   // La línea de nombre tiene letras y `<` pero NO una corrida larga de dígitos,
   // y contiene el separador de bloque `<<`.
@@ -99,9 +113,9 @@ function parseNameLine(lines: string[]): string | null {
   if (!nameLine) return null;
 
   const [surnameBlock, givenBlockRaw] = nameLine.split("<<");
-  const surnames = surnameBlock.split("<").filter(Boolean);
+  const surnames = dropFillerMisreads(surnameBlock.split("<").filter(Boolean));
   const givenBlock = (givenBlockRaw ?? "").replace(/<+$/, "");
-  const givenNames = givenBlock.split("<").filter(Boolean);
+  const givenNames = dropFillerMisreads(givenBlock.split("<").filter(Boolean));
   if (surnames.length === 0 && givenNames.length === 0) return null;
 
   const full = [...givenNames, ...surnames].join(" ");
@@ -126,8 +140,11 @@ export function parseCubanMrzText(rawText: string): CubanMrzParse {
     fieldConfidence.identityNumber = 0.9;
   }
 
-  // Nacimiento + sexo + vencimiento: YYMMDD + M|F + YYMMDD.
-  const dates = /(\d{6})([MF])(\d{6})/.exec(joined);
+  // Nacimiento + sexo + vencimiento: YYMMDD + [dígito de control] + M|F +
+  // YYMMDD. El carné real trae el dígito de control ("6503207F3011154");
+  // sin contemplarlo, el patrón se corría un dígito y la fecha de
+  // nacimiento salía inválida.
+  const dates = /(\d{6})\d?([MF])(\d{6})/.exec(joined);
   if (dates) {
     const dob = normalizeMrzYyMmDd(dates[1]);
     const exp = normalizeMrzYyMmDd(dates[3]);
@@ -156,13 +173,23 @@ export function parseCubanMrzText(rawText: string): CubanMrzParse {
  * Ejecuta el pipeline completo: recorta la franja inferior del reverso ya
  * recortado por el vendedor (varias proporciones, por si el encuadre varía),
  * OCR con alfabeto restringido A-Z/0-9/`<`, reconstruye líneas y parsea.
- * Devuelve el mejor resultado (el que reconoce más campos).
+ * Combina las franjas campo por campo: cada campo lo aporta la PRIMERA franja
+ * que lo lee (las ajustadas primero, que leen el nombre más limpio); las
+ * anchas solo completan lo que falte (p. ej. el NI de la línea 1).
  */
 export async function extractCubanMrz(
   backImageDataUrl: string,
 ): Promise<CubanMrzParse & { regionUsed: boolean }> {
-  const fractions = [0.3, 0.22, 0.38];
-  let best: (CubanMrzParse & { regionUsed: boolean }) | null = null;
+  // Franjas más altas al final: si la foto no se recortó a la tarjeta (el
+  // editor guarda la foto completa por defecto), la zona legible queda más
+  // arriba del borde inferior y las franjas bajas cortan la línea del NI.
+  const fractions = [0.3, 0.22, 0.38, 0.5, 0.65];
+  const merged: CubanMrzParse & { regionUsed: boolean } = {
+    data: {},
+    fieldConfidence: {},
+    lines: [],
+    regionUsed: false,
+  };
 
   for (const fraction of fractions) {
     try {
@@ -176,17 +203,20 @@ export async function extractCubanMrz(
         charWhitelist: MRZ_CHARSET,
       });
       const parsed = parseCubanMrzText(text);
-      const fieldCount = Object.keys(parsed.data).length;
-      if (!best || fieldCount > Object.keys(best.data).length) {
-        best = { ...parsed, regionUsed: true };
+      merged.regionUsed = true;
+      if (merged.lines.length === 0) merged.lines = parsed.lines;
+      for (const key of Object.keys(parsed.data) as (keyof ExtractedRecipientData)[]) {
+        if (merged.data[key] !== undefined) continue;
+        (merged.data as Record<string, unknown>)[key] = parsed.data[key];
+        merged.fieldConfidence[key] = parsed.fieldConfidence[key];
       }
       // Con NI + nombre ya alcanzamos la máxima confianza útil: no hace
       // falta seguir probando franjas.
-      if (parsed.data.identityNumber && parsed.data.fullName) break;
+      if (merged.data.identityNumber && merged.data.fullName) break;
     } catch {
       /* se intenta la siguiente franja */
     }
   }
 
-  return best ?? { data: {}, fieldConfidence: {}, lines: [], regionUsed: false };
+  return merged;
 }

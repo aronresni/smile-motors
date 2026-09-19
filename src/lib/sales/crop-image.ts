@@ -11,6 +11,12 @@ export interface PixelCrop {
 
 const toRadian = (deg: number) => (deg * Math.PI) / 180;
 
+/** Tope de píxeles del lienzo de trabajo. Safari/iOS no dibuja lienzos de más
+ * de ~16,7 MP (falla en silencio) y las fotos de la galería de un móvil
+ * actual rondan 24–64 MP. 16 MP conserva de sobra la resolución que necesitan
+ * el PDF417 y el OCR (una foto de 12 MP ni se toca). */
+const MAX_CANVAS_PIXELS = 16_000_000;
+
 function rotatedBoundingBox(width: number, height: number, rotationDeg: number) {
   const rad = toRadian(rotationDeg);
   return {
@@ -42,24 +48,29 @@ export async function getCroppedImage(
 
   const rad = toRadian(rotationDeg);
   const box = rotatedBoundingBox(image.width, image.height, rotationDeg);
+  // El recorte llega en píxeles de la imagen rotada a tamaño completo; si esa
+  // imagen supera el tope, todo (lienzo y recorte) se escala por igual.
+  const scale = Math.min(1, Math.sqrt(MAX_CANVAS_PIXELS / (box.width * box.height)));
 
-  canvas.width = box.width;
-  canvas.height = box.height;
+  canvas.width = Math.max(1, Math.round(box.width * scale));
+  canvas.height = Math.max(1, Math.round(box.height * scale));
 
+  ctx.imageSmoothingQuality = "high";
+  ctx.scale(scale, scale);
   ctx.translate(box.width / 2, box.height / 2);
   ctx.rotate(rad);
   ctx.translate(-image.width / 2, -image.height / 2);
   ctx.drawImage(image, 0, 0);
 
   const imageData = ctx.getImageData(
-    Math.max(0, Math.round(crop.x)),
-    Math.max(0, Math.round(crop.y)),
-    Math.max(1, Math.round(crop.width)),
-    Math.max(1, Math.round(crop.height)),
+    Math.max(0, Math.round(crop.x * scale)),
+    Math.max(0, Math.round(crop.y * scale)),
+    Math.max(1, Math.round(crop.width * scale)),
+    Math.max(1, Math.round(crop.height * scale)),
   );
 
-  canvas.width = Math.max(1, Math.round(crop.width));
-  canvas.height = Math.max(1, Math.round(crop.height));
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
   ctx.putImageData(imageData, 0, 0);
 
   // 0.95: la recompresión JPEG del recorte alimenta directamente PDF417/OCR

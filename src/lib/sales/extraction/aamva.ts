@@ -13,6 +13,19 @@ import type { ExtractedDocumentData } from "@/lib/sales/types";
 import { normalizeAamvaDate } from "@/lib/sales/extraction/date-normalize";
 import { titleCase } from "@/lib/sales/extraction/text-utils";
 
+/** Valores que AAMVA usa para "sin dato" (p. ej. Florida: DAD = "NONE"). */
+const UNAVAILABLE = /^(NONE|UNAVL|UNAVAILABLE|N\/A)$/i;
+
+/** Algunos lectores devuelven los separadores de control como texto legible
+ * ("<LF>", "<RS>", "<CR>", "<GS>"); se restauran antes de partir en líneas. */
+function restoreControlChars(raw: string): string {
+  return raw
+    .replace(/<LF>/g, "\n")
+    .replace(/<CR>/g, "\r")
+    .replace(/<RS>/g, "\x1e")
+    .replace(/<GS>/g, "\x1d");
+}
+
 function cleanZip(value: string): string {
   const digits = value.replace(/\D/g, "");
   if (digits.length >= 5) return digits.slice(0, 5);
@@ -25,19 +38,28 @@ export interface AamvaParseResult {
   fieldSources: Record<string, "pdf417">;
 }
 
-export function parseAamva(raw: string): AamvaParseResult | null {
-  if (!raw || raw.length < 20) return null;
+export function parseAamva(input: string): AamvaParseResult | null {
+  if (!input || input.length < 20) return null;
+  const raw = restoreControlChars(input);
   // El payload AAMVA contiene el marcador "ANSI " en la cabecera.
   if (!/ANSI\s/i.test(raw) && !/^@/.test(raw)) return null;
 
   const fields: Record<string, string> = {};
-  for (const line of raw.split(/[\r\n]+/)) {
+  const addField = (code: string, rawValue: string) => {
+    const value = rawValue.trim();
+    if (value && !UNAVAILABLE.test(value) && fields[code] === undefined) fields[code] = value;
+  };
+  for (const line of raw.split(/[\r\n\x1e]+/)) {
     const trimmed = line.trim();
+    if (/^ANSI\s/i.test(trimmed)) {
+      // El primer elemento del subarchivo puede venir pegado a la cabecera y
+      // al directorio de subarchivos: "ANSI …DL0041…ZF0365…DLDAQ<n.º>".
+      const first = /(?:DL|ID)(D[A-Z]{2})(.*)$/.exec(trimmed.slice(5));
+      if (first) addField(first[1], first[2]);
+      continue;
+    }
     const match = /^([A-Z]{3})(.*)$/.exec(trimmed);
-    if (!match) continue;
-    const code = match[1];
-    const value = match[2].trim();
-    if (value && fields[code] === undefined) fields[code] = value;
+    if (match) addField(match[1], match[2]);
   }
 
   const data: ExtractedDocumentData = {};

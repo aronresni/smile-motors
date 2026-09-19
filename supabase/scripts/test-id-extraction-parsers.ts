@@ -81,6 +81,27 @@ console.log("AAMVA (payload sintético, formato real del subfile DL)");
   check("payload vacío -> null", empty === null, empty);
 }
 
+console.log("\nAAMVA — formato completo de una licencia real (payload sintético)");
+{
+  // Como la de Florida: RS/CR en la cabecera, el primer elemento (DAQ)
+  // pegado al directorio de subarchivos y el segundo nombre "NONE".
+  const payload =
+    "@\n\x1e\rANSI 636010090002DL00410330ZF03710047DLDAQR512448907710\n" +
+    ["DCSQUINTANA BERMUDEZ", "DDEN", "DACROLANDO", "DADNONE", "DBB07091971", "DBA07092032",
+      "DAG2280 SUNSET PALM WAY", "DAIKISSIMMEE", "DAJFL", "DAK347461234  "].join("\n") +
+    "\rZFZFA\nZFB\r";
+  const r = parseAamva(payload);
+  check("DAQ pegado a la cabecera -> documentNumber", r?.data.documentNumber === "R512448907710", r?.data.documentNumber);
+  check("DAD 'NONE' no se suma al nombre", r?.data.firstName === "Rolando", r?.data.firstName);
+  check("resto de campos intactos", r?.data.lastName === "Quintana Bermudez" && r?.data.postalCode === "34746" && r?.data.city === "Kissimmee", r?.data);
+
+  // Mismo payload con los separadores como texto legible ("<LF>"), como los
+  // devuelve el modo HRI del lector: se restauran y se lee igual.
+  const hri = payload.replace(/\n/g, "<LF>").replace(/\r/g, "<CR>").replace(/\x1e/g, "<RS>");
+  const rh = parseAamva(hri);
+  check("separadores '<LF>'/'<RS>'/'<CR>' como texto -> mismos campos", rh?.data.documentNumber === "R512448907710" && rh?.data.firstName === "Rolando" && rh?.data.state === "FL", rh?.data);
+}
+
 // ======================================================= AAMVA date edge ==
 console.log("\nFechas AAMVA (8 dígitos)");
 {
@@ -139,6 +160,17 @@ console.log("\nparseCubanMrzText — zona legible por máquina (payload sintéti
 
   const garbage = parseCubanMrzText("texto sin relación alguna con un documento");
   check("texto no-MRZ -> sin campos inventados", Object.keys(garbage.data).length === 0, garbage.data);
+
+  // Formato real: dígito de control entre nacimiento y sexo, y relleno "<<<"
+  // de la línea de nombre leído como letras por el OCR.
+  const real = parseCubanMrzText([
+    "I<CUBAFX112233699010512345<<<<",
+    "6503207F3011154CUBAFX112233<<8",
+    "PEREZ<SUAREZ<<YANELIS<K<LLLLLLLL",
+  ].join("\n"));
+  check("con dígito de control: nacimiento 1965-03-20", real.data.dateOfBirth === "1965-03-20", real.data.dateOfBirth);
+  check("con dígito de control: vencimiento 2030-11-15 y sexo F", real.data.expirationDate === "2030-11-15" && real.data.sex === "F", real.data);
+  check("relleno mal leído ('K', 'LLLLLLLL') no entra en el nombre", real.data.fullName === "Yanelis Perez Suarez", real.data.fullName);
 }
 
 // ============================================ OCR de respaldo — licencia US
@@ -186,6 +218,34 @@ console.log("\nparseUsLicenseText — nombre, último recurso (líneas simples, 
   check("último recurso: primera línea plausible = apellido", parsed.data.lastName === "Gomez", parsed.data.lastName);
   check("último recurso: segunda línea plausible = nombre", parsed.data.firstName === "Yanelis", parsed.data.firstName);
   check("confianza del último recurso es baja (<= 0.3*base)", (parsed.fieldConfidence.lastName ?? 1) <= 0.8 * 0.3 + 1e-9, parsed.fieldConfidence.lastName);
+
+  const lowConfidence = parseUsLicenseText(text, 0.35);
+  check("con OCR de baja confianza no adivina nombres", lowConfidence.data.lastName === undefined && lowConfidence.data.firstName === undefined, lowConfidence.data);
+}
+
+console.log("\nparseUsLicenseText — lectura corrupta de una foto difícil (holograma/reflejo)");
+{
+  // Forma de la lectura real que autocompletaba "Florida Orverucense" /
+  // "Sclasse": minúsculas mezcladas, nombre del estado pegado a basura,
+  // etiqueta ("CLASS") con letras de más. Valores inventados.
+  const text = [
+    "o A;",
+    "Florida orverucene 7",
+    "scLassE",
+    "wowR512-448-90-771-0",
+    "GARCIA LOPEZ",
+    "ORLANDO FL 328018112",
+    "1 vos 07/09/1971 1ssex M",
+    "wee 07/09/2082 1sner 5-11\"",
+  ].join("\n");
+  const parsed = parseUsLicenseText(text, 0.9);
+  check("no autocompleta nombres de líneas en minúsculas / con etiquetas", parsed.data.firstName === undefined && parsed.data.lastName === undefined, parsed.data);
+  check("N.º con guiones sin etiqueta legible -> sin guiones (como el PDF417)", parsed.data.documentNumber === "R512448907710", parsed.data.documentNumber);
+
+  const badExp = parseUsLicenseText("EXP 07/09/2082", 0.9);
+  check("vencimiento imposible (2082) no se autocompleta", badExp.data.expirationDate === undefined, badExp.data.expirationDate);
+  const badDob = parseUsLicenseText("DOB 07/09/2020", 0.9);
+  check("nacimiento imposible para un conductor (6 años) no se autocompleta", badDob.data.dateOfBirth === undefined, badDob.data.dateOfBirth);
 }
 
 // ======================================== OCR de respaldo — carné cubano ==

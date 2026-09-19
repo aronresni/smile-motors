@@ -3,9 +3,8 @@
  *
  *   PDF417 (reverso) → AAMVA
  *          ↓ (campos faltantes)
- *   OCR local (frente, o reverso si no hay frente)
- *          ↓ (si aún falta el N.º de documento)
- *   OCR de respaldo con alfabeto restringido sobre el mismo lado
+ *   OCR local (frente, o reverso si no hay frente) — conservador: un campo
+ *   dudoso queda vacío antes que autocompletarse con un valor falso
  *          ↓
  *   fusión → ExtractedDocumentData
  *
@@ -145,27 +144,9 @@ export async function runBuyerExtraction(
             }
           }
         }
-
-        // 3) Respaldo numérico: sin PDF417, el N.º de documento es el campo
-        //    más sensible a confusiones letra/dígito del OCR de texto libre.
-        //    Un segundo pase restringido a dígitos ayuda cuando el formato
-        //    del documento es mayormente numérico. Nunca se aplica a nombres.
-        if (!data.documentNumber) {
-          try {
-            const { text: digitsText } = await recognizeText(working, "eng", {
-              charWhitelist: "0123456789",
-            });
-            const digitsOnly = digitsText.replace(/\D/g, "");
-            if (digitsOnly.length >= 6 && digitsOnly.length <= 12) {
-              data.documentNumber = digitsOnly;
-              fieldSources.documentNumber = source;
-              fieldConfidenceAll.documentNumber = 0.5;
-              confidences.push(0.5);
-            }
-          } catch {
-            /* respaldo best-effort */
-          }
-        }
+        // (Sin respaldo "solo dígitos" para el N.º de documento: juntaba TODOS
+        // los dígitos del frente —fechas, código postal— y podía inventar un
+        // número. Mejor vacío que equivocado; el PDF417 lo trae completo.)
       } catch (err) {
         // El OCR (inicialización del worker de Tesseract o el reconocimiento
         // en sí) falló por completo — se registra para no disfrazarlo de
