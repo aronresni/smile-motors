@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { toast } from "@/components/ui/toast";
 import { TextField, TextAreaField, SelectField, ReadOnlyField } from "@/components/ui/form-fields";
+import { SelectMenuField } from "@/components/ui/filter-select";
 import { formatCents, parseAmountToCents, centsToInputvalue } from "@/lib/money";
 import { ROUTES } from "@/lib/constants";
 import { approvalsErrorText } from "@/lib/admin/approvals-errors";
@@ -191,13 +192,12 @@ function UnitVariantSelect({
   }, [productId]);
 
   return (
-    <SelectField
+    <SelectMenuField
       label="Variante / color"
       placeholder={variants.length === 0 ? "Sin variantes" : undefined}
       disabled={variants.length === 0}
       value={currentVariantId}
-      onChange={(e) => {
-        const id = e.target.value;
+      onValueChange={(id) => {
         const label = variants.find((v) => v.id === id)?.label ?? "";
         onChange(id, label);
       }}

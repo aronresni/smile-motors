@@ -1,47 +1,19 @@
 import { ROUTES } from "@/lib/constants";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { ALERT_CATEGORY_OPTIONS, ALERT_PRIORITY_OPTIONS, type AlertsListQuery } from "@/lib/admin/alerts-list-params";
 import type { SellerFilterOption } from "@/lib/admin/sellers";
 
 export function AlertsToolbar({ query, sellers }: { query: AlertsListQuery; sellers: SellerFilterOption[] }) {
   return (
     <form method="get" action={ROUTES.adminAlertas} className="flex flex-wrap items-end gap-2">
-      <div>
-        <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Categoría</label>
-        <select
-          name="category"
-          defaultValue={query.category}
-          className="rounded-md border px-2.5 py-1.5 text-sm border-border dark:bg-transparent"
-        >
-          {ALERT_CATEGORY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Prioridad</label>
-        <select
-          name="priority"
-          defaultValue={query.priority}
-          className="rounded-md border px-2.5 py-1.5 text-sm border-border dark:bg-transparent"
-        >
-          {ALERT_PRIORITY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Vendedor</label>
-        <select
-          name="seller"
-          defaultValue={query.sellerId ?? ""}
-          className="rounded-md border px-2.5 py-1.5 text-sm border-border dark:bg-transparent"
-        >
-          <option value="">Todos</option>
-          {sellers.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
-      </div>
+      <FilterSelect label="Categoría" name="category" defaultValue={query.category} options={ALERT_CATEGORY_OPTIONS} />
+      <FilterSelect label="Prioridad" name="priority" defaultValue={query.priority} options={ALERT_PRIORITY_OPTIONS} />
+      <FilterSelect
+        label="Vendedor"
+        name="seller"
+        defaultValue={query.sellerId ?? ""}
+        options={[{ value: "", label: "Todos" }, ...sellers.map((s) => ({ value: s.id, label: s.name }))]}
+      />
       <button
         type="submit"
         className="rounded-md border px-3 py-1.5 text-sm font-medium border-border bg-brand text-brand-foreground"

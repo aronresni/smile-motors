@@ -1,5 +1,6 @@
 "use client";
 
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -57,16 +58,14 @@ export function SellerListToolbar() {
           className="w-full rounded-lg border px-3 py-2 text-sm placeholder:text-muted-foreground border-border bg-surface text-foreground"
         />
       </label>
-      <select
-        aria-label="Filtrar por estado"
+      <FilterSelect
+        ariaLabel="Filtrar por estado"
+        prefix="Estado"
         value={query.status}
-        onChange={(e) => navigate({ status: e.target.value as SellerListQuery["status"] })}
-        className="rounded-lg border px-3 py-2 text-xs font-medium border-border bg-surface text-foreground"
-      >
-        {SELLER_STATUS_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>Estado: {opt.label}</option>
-        ))}
-      </select>
+        onValueChange={(v) => navigate({ status: v as SellerListQuery["status"] })}
+        options={SELLER_STATUS_OPTIONS}
+        containerClassName="w-full sm:w-auto"
+      />
       {filtersActive && (
         <button
           type="button"

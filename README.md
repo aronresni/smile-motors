@@ -57,6 +57,6 @@ src/
 
 ```bash
 npx supabase login
-npx supabase link --project-ref cubjavutpooievkhxdhp
+npx supabase link --project-ref <project-ref>
 npm run db:types      # regenera src/types/database.types.ts desde el esquema
 ```

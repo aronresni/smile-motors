@@ -30,9 +30,12 @@ export interface LiquidationCommissionItem {
   eligibleAt: string | null;
 }
 
+export type LiquidationAdjustmentType = "BONO" | "BONO_MARKETING" | "BONO_VENTAS" | "AJUSTE_POSITIVO" | "AJUSTE_NEGATIVO";
+
 export interface LiquidationAdjustment {
   id?: string;
-  type: "BONO" | "AJUSTE_POSITIVO" | "AJUSTE_NEGATIVO";
+  /** BONO = bono genérico previo (se muestra dentro del bono de ventas). */
+  type: LiquidationAdjustmentType;
   amountCents: number;
   reason: string;
   createdByName?: string | null;

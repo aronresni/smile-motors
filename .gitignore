@@ -43,6 +43,9 @@ supabase/dev-fixtures/*
 /playwright-report/
 /blob-report/
 
+# instantáneas de datos reales (respaldo local de migraciones de datos) — NUNCA se versionan
+/legacy-backup/precios-fijos-2026-09-18/
+
 # vercel
 .vercel
 

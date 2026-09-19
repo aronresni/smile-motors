@@ -1,4 +1,5 @@
 import { ROUTES } from "@/lib/constants";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { REPORT_PERIOD_OPTIONS, type ReportPeriod, type ReportPeriodPreset } from "@/lib/admin/reports-period";
 
 /** Selector de período — formulario GET nativo, preserva la pestaña activa.
@@ -8,18 +9,7 @@ export function ReportPeriodPicker({ tab, period }: { tab: string; period: Repor
   return (
     <form method="get" action={ROUTES.adminReportes} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="tab" value={tab} />
-      <div>
-        <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Período</label>
-        <select
-          name="period"
-          defaultValue={period.preset}
-          className="rounded-md border px-2.5 py-1.5 text-sm border-border dark:bg-transparent"
-        >
-          {REPORT_PERIOD_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
+      <FilterSelect label="Período" name="period" defaultValue={period.preset} options={REPORT_PERIOD_OPTIONS} />
       {period.preset === ("custom" as ReportPeriodPreset) && (
         <>
           <div>

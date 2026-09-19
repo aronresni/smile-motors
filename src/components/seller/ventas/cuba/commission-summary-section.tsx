@@ -6,8 +6,8 @@ import type { SaleCommissionEstimate, SaleCommissionItem } from "@/lib/sales/com
 import { CommissionBreakdownList } from "@/components/commission/commission-breakdown";
 
 const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Pendiente",
-  ELIGIBLE: "Elegible para liquidación",
+  PENDING: "Confirmada · venta por cobrar",
+  ELIGIBLE: "Confirmada · venta cobrada",
   VOID: "Anulada",
 };
 

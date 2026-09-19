@@ -18,7 +18,7 @@ const MESSAGES: Record<string, string> = {
   UNIT_PRODUCT_LOCKED_COMMISSION:
     "No se puede cambiar el producto de una unidad cuya comisión ya fue calculada al marcarla vendida.",
   COMMISSION_LOCKED:
-    "La comisión de esa unidad ya es elegible o está liquidada: el precio no puede cambiar sin una corrección específica.",
+    "La comisión de esa unidad ya está incluida en una liquidación (o la venta ya está cobrada): el precio no puede cambiar sin una corrección específica.",
   INVALID_PAYLOAD: "Los datos enviados no son válidos.",
   REASON_REQUIRED: "Escribe el motivo del cambio (mínimo 4 caracteres). Queda en la auditoría.",
   UNIT_ID_UNKNOWN: "Una de las unidades ya no existe en esta venta. Recarga la página.",

@@ -10,7 +10,7 @@
  *
  * Uso:
  *   node --env-file=.env.local supabase/scripts/test-no-vin-stock.mjs \
- *     --admin e2e-smile-admin@motods.test --seller e2e-smile-seller@motods.test --password "…"
+ *     --admin e2e-smile-admin@motods.test --seller e2e-smile-seller@motods.test
  *
  * Crea y elimina sus propios datos. La única escritura con service_role es
  * la simulación explícita de UNA comisión histórica (caso 4) sobre datos de
@@ -25,14 +25,14 @@ const { values } = parseArgs({
   options: {
     admin: { type: "string" },
     seller: { type: "string" },
-    password: { type: "string" },
+    password: { type: "string", default: process.env.E2E_PASSWORD },
   },
 });
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!URL || !ANON || !SERVICE || !values.admin || !values.seller || !values.password) {
-  console.error("Faltan variables de entorno o --admin/--seller/--password");
+  console.error("Faltan variables de entorno, --admin/--seller o E2E_PASSWORD (.env.local)");
   process.exit(1);
 }
 const svc = createClient(URL, SERVICE, { auth: { persistSession: false } });

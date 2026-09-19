@@ -14,10 +14,10 @@ export function ComisionesTab({ report, start, end }: { report: CommissionsRepor
       <div>
         <ReportSectionLabel>Estado actual (no depende del período) — sale_commissions es la única fuente</ReportSectionLabel>
         <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <ReportKpi label="Pendientes" value={String(current.pendingCount)} />
-          <ReportKpi label="Monto pendiente" value={formatCents(current.pendingCents)} />
-          <ReportKpi label="Elegibles" value={String(current.eligibleCount)} tone="accent" />
-          <ReportKpi label="Monto elegible" value={formatCents(current.eligibleCents)} tone="accent" />
+          <ReportKpi label="De ventas por cobrar" value={String(current.pendingCount)} />
+          <ReportKpi label="Monto de ventas por cobrar" value={formatCents(current.pendingCents)} />
+          <ReportKpi label="De ventas cobradas" value={String(current.eligibleCount)} tone="accent" />
+          <ReportKpi label="Monto de ventas cobradas" value={formatCents(current.eligibleCents)} tone="accent" />
         </div>
         {avgCommissionPerUnitCents != null && (
           <p className="mt-2 text-xs text-muted-foreground">Comisión promedio por unidad (período): {formatCents(avgCommissionPerUnitCents)}</p>
@@ -41,8 +41,8 @@ export function ComisionesTab({ report, start, end }: { report: CommissionsRepor
             <thead>
               <tr className="border-b text-left text-[11px] uppercase tracking-wide text-muted-foreground border-border bg-surface">
                 <th className="px-3 py-2.5 font-medium">Vendedor</th>
-                <th className="px-3 py-2.5 text-right font-medium">Pendiente</th>
-                <th className="px-3 py-2.5 text-right font-medium">Elegible</th>
+                <th className="px-3 py-2.5 text-right font-medium">Venta por cobrar</th>
+                <th className="px-3 py-2.5 text-right font-medium">Venta cobrada</th>
               </tr>
             </thead>
             <tbody>

@@ -8,7 +8,7 @@ import { createLiquidationDraft } from "@/app/(admin)/admin/liquidaciones/action
 import { ROUTES } from "@/lib/constants";
 
 /** Fila sin liquidación materializada todavía: crea el DRAFT (reclama las
- * comisiones ELIGIBLE ya disponibles) y navega directo a su detalle. */
+ * comisiones de ventas confirmadas en la semana) y navega directo a su detalle. */
 export function CreateDraftButton({ sellerId, weekStart }: { sellerId: string; weekStart: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);

@@ -10,7 +10,7 @@ export function LiquidationWeekTable({ rows, weekStart }: { rows: LiquidationWee
     return (
       <div className="rounded-xl border border-dashed px-6 py-14 text-center border-border">
         <p className="text-sm font-medium text-text-secondary">
-          Sin actividad ni comisiones elegibles para ningún vendedor esta semana.
+          Sin actividad ni comisiones a liquidar para ningún vendedor esta semana.
         </p>
       </div>
     );
@@ -24,7 +24,7 @@ export function LiquidationWeekTable({ rows, weekStart }: { rows: LiquidationWee
               <th className="px-3 py-2.5 font-medium">Vendedor</th>
               <th className="px-3 py-2.5 font-medium text-right">Ventas Pending</th>
               <th className="px-3 py-2.5 font-medium text-right">Ventas Sold</th>
-              <th className="px-3 py-2.5 font-medium text-right">Comisiones elegibles</th>
+              <th className="px-3 py-2.5 font-medium text-right">Comisiones a liquidar</th>
               <th className="px-3 py-2.5 font-medium text-right">Subtotal</th>
               <th className="px-3 py-2.5 font-medium text-right">Ajustes</th>
               <th className="px-3 py-2.5 font-medium text-right">Total</th>

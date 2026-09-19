@@ -8,9 +8,11 @@ import { parseAmountToCents } from "@/lib/money";
 import { liquidationActionErrorText } from "@/lib/admin/liquidations-errors";
 import { addLiquidationAdjustment } from "@/app/(admin)/admin/liquidaciones/actions";
 import { toast } from "@/components/ui/toast";
+import type { LiquidationAdjustmentType } from "@/lib/sales/liquidation-types";
 
-const TYPE_OPTIONS = [
-  { value: "BONO", label: "Bono" },
+const TYPE_OPTIONS: { value: LiquidationAdjustmentType; label: string }[] = [
+  { value: "BONO_VENTAS", label: "Bono de ventas" },
+  { value: "BONO_MARKETING", label: "Bono de marketing" },
   { value: "AJUSTE_POSITIVO", label: "Ajuste positivo" },
   { value: "AJUSTE_NEGATIVO", label: "Ajuste negativo" },
 ];
@@ -19,7 +21,7 @@ const TYPE_OPTIONS = [
  * calculada. Bloqueado por el backend una vez la liquidación está PAID. */
 export function LiquidationAdjustmentForm({ liquidationId }: { liquidationId: string }) {
   const router = useRouter();
-  const [type, setType] = useState<"BONO" | "AJUSTE_POSITIVO" | "AJUSTE_NEGATIVO">("BONO");
+  const [type, setType] = useState<LiquidationAdjustmentType>("BONO_VENTAS");
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);

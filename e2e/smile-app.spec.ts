@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
+import { E2E_PASSWORD } from "./credentials";
 
 /**
  * SMILE MOTORS — login único, redirección por rol, bloqueo de cuenta
@@ -17,7 +18,7 @@ try {
 
 const ADMIN_EMAIL = "e2e-smile-admin@motods.test";
 const SELLER_EMAIL = "e2e-smile-seller@motods.test";
-const PASSWORD = "Smile-E2E-Pw-1!";
+const PASSWORD = E2E_PASSWORD;
 
 test.describe.configure({ mode: "serial" });
 

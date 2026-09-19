@@ -3,6 +3,8 @@ import type { LiquidationAdjustment } from "@/lib/sales/liquidation-types";
 
 const TYPE_LABEL: Record<string, string> = {
   BONO: "Bono",
+  BONO_MARKETING: "Bono de marketing",
+  BONO_VENTAS: "Bono de ventas",
   AJUSTE_POSITIVO: "Ajuste positivo",
   AJUSTE_NEGATIVO: "Ajuste negativo",
 };

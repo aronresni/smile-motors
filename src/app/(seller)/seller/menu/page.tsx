@@ -55,7 +55,7 @@ export default async function SellerMenuPage() {
       <div className="space-y-2.5">
         <MenuLink href={ROUTES.sellerVentaNueva} title="Nueva venta" description="Registra una operación nueva." icon={<PlusIcon size={18} />} />
         <MenuLink href={ROUTES.sellerVentas} title="Mis ventas" description="Borradores, pendientes, vendidas y pagadas." icon={<ReceiptIcon size={18} />} />
-        <MenuLink href={ROUTES.sellerComisiones} title="Mis comisiones" description="Pendientes y elegibles, con el detalle de cada venta." icon={<PercentIcon size={18} />} />
+        <MenuLink href={ROUTES.sellerComisiones} title="Mis comisiones" description="Comisiones confirmadas, con el detalle de cada venta." icon={<PercentIcon size={18} />} />
         <MenuLink href={ROUTES.sellerLiquidaciones} title="Mis liquidaciones" description="Pagos semanales aprobados, con su detalle." icon={<WalletIcon size={18} />} />
       </div>
 

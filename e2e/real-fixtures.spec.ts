@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
+import { E2E_PASSWORD } from "./credentials";
 
 /**
  * Prueba de ACEPTACIÓN con las 4 fotos REALES de la tarea (no sintéticas).
@@ -33,7 +34,7 @@ test.describe("Fotos REALES (aceptación)", () => {
   test.skip(!haveRealFixtures, `Faltan fixtures reales en ${FIXTURES_DIR} — se salta esta prueba.`);
 
   const TEST_EMAIL = "e2e-seller@motods.test";
-  const TEST_PASSWORD = "E2E-Test-Pw-1!";
+  const TEST_PASSWORD = E2E_PASSWORD;
 
   test.beforeAll(() => {
     if (!haveRealFixtures) return;

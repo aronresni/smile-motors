@@ -29,9 +29,8 @@ function SaleRow({ sale, note, noteTone }: { sale: LiquidationActivitySale; note
 /**
  * "ACTIVIDAD DE LA SEMANA" — informativa, NUNCA suma al monto a pagar.
  * Compartida entre Admin y Seller (mismo shape, mismas reglas de negocio):
- * PENDING → "no incluida en esta liquidación"; SOLD → comisión ya calculada
- * pero todavía PENDING (no ELIGIBLE); PAID → ya contribuye en la sección de
- * comisiones a liquidar (no se repite el monto aquí).
+ * PENDING → "no incluida en esta liquidación"; SOLD/PAID confirmadas en la
+ * semana → su comisión ya está en "comisiones a liquidar" (no se repite aquí).
  */
 export function LiquidationActivitySection({ activity }: { activity: LiquidationActivity }) {
   const total = activity.pending.length + activity.sold.length + activity.paid.length;
@@ -57,18 +56,18 @@ export function LiquidationActivitySection({ activity }: { activity: Liquidation
 
       {activity.sold.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Vendidas — comisión pendiente</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Vendidas esta semana — cliente con cobro pendiente</p>
           {activity.sold.map((s) => (
-            <SaleRow key={s.saleId} sale={s} note="Vendida — comisión pendiente" noteTone="warn" />
+            <SaleRow key={s.saleId} sale={s} note="Vendida — comisión incluida en esta liquidación" />
           ))}
         </div>
       )}
 
       {activity.paid.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Pagadas</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Vendidas esta semana — ya cobradas</p>
           {activity.paid.map((s) => (
-            <SaleRow key={s.saleId} sale={s} note="Pagada — ver comisiones a liquidar abajo" />
+            <SaleRow key={s.saleId} sale={s} note="Vendida esta semana y ya cobrada — comisión incluida en esta liquidación" />
           ))}
         </div>
       )}

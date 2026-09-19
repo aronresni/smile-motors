@@ -148,7 +148,7 @@ export default async function AdminDashboardPage({
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <KpiCard label="Monto pendiente a cobrar" value={formatCents(data.outstandingAmountCents)} hint="Saldo de todas las ventas vendidas" tone="warning" />
           <KpiCard label="Monto pagado" value={formatCents(data.paidAmountCentsPeriod)} hint={`Ventas pagadas en el período (${range.label})`} tone="success" />
-          <KpiCard label="Comisiones elegibles" value={String(commissionKpis.eligibleCount)} hint="Para la próxima liquidación" tone="info" href={ROUTES.adminComisiones} />
+          <KpiCard label="Comisiones de ventas cobradas" value={String(commissionKpis.eligibleCount)} hint="Cliente con pago completo" tone="info" href={ROUTES.adminComisiones} />
         </div>
       </section>
 

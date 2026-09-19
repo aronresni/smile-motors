@@ -15,6 +15,7 @@ const MESSAGES: Record<string, string> = {
   REQUEST_ALREADY_PENDING: "Ya existe una solicitud de edición pendiente de aprobación para esta venta.",
   INVALID_CHANGE_PATH: "Uno de los campos enviados no es editable.",
   UNIT_NOT_IN_SALE: "Una de las unidades no pertenece a esta venta.",
+  COMMISSION_LOCKED: "La comisión de esa unidad ya está incluida en una liquidación: su precio no puede cambiar.",
   UNIT_AGREED_PRICE_INVALID: "Escribe un precio de venta mayor que $0.",
   UNIT_PRICE_BELOW_FIXED_PRICE:
     "El precio de venta no puede ser inferior al precio fijo del producto. Para un descuento, un administrador debe ajustar el precio fijo en la ficha del producto.",

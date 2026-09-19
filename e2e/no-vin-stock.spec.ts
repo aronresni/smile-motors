@@ -3,6 +3,7 @@ import path from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
 import { commissionTier } from "../supabase/scripts/fixtures/commission-test-products.mjs";
+import { E2E_PASSWORD } from "./credentials";
 
 /**
  * Sin VIN ni stock físico (migración 20260918120000) — verificación de
@@ -20,7 +21,7 @@ try {
 
 const ADMIN_EMAIL = "e2e-smile-admin@motods.test";
 const SELLER_EMAIL = "e2e-smile-seller@motods.test";
-const PASSWORD = "Smile-E2E-Pw-1!";
+const PASSWORD = E2E_PASSWORD;
 const ZELLE = "2ab4abc7-f6a4-41a9-84b0-e0d2d0668fce";
 const T3 = commissionTier(3);
 
@@ -180,7 +181,11 @@ test("10 · VIN/stock ausente de navegación, alertas, reportes, actividad y bú
   await expect(page.getByText("Stock disponible")).toHaveCount(0);
 
   await page.goto("/admin/actividad");
-  await expect(page.locator("option", { hasText: "Inventario" })).toHaveCount(0);
+  // Filtro de categoría (desplegable propio): se abre y se revisan sus opciones.
+  await page.getByRole("combobox", { name: "Categoría" }).click();
+  await expect(page.getByRole("option").first()).toBeVisible();
+  await expect(page.getByRole("option", { name: /Inventario/ })).toHaveCount(0);
+  await page.keyboard.press("Escape");
 
   await page.goto("/admin");
   await page.waitForLoadState("networkidle");

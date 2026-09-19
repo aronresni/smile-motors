@@ -101,7 +101,7 @@ function buildCommissionKpi(commissionKpis: SellerCommissionKpis): KpiMetric {
     previousValue: commissionKpis.eligibleAmountCents,
     deltaPct: 0,
     trend: "neutral",
-    deltaLabel: `Elegible ${formatCents(commissionKpis.eligibleAmountCents)}`,
+    deltaLabel: `Cobrada ${formatCents(commissionKpis.eligibleAmountCents)}`,
   };
 }
 

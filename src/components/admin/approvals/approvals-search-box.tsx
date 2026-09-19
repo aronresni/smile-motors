@@ -1,4 +1,5 @@
 import type { ApprovalsTab } from "@/lib/admin/approvals-list-params";
+import { FilterSelect } from "@/components/ui/filter-select";
 
 const EDICIONES_STATUS_OPTIONS = [
   { value: "PENDING", label: "Pendientes" },
@@ -32,15 +33,14 @@ export function ApprovalsSearchBox({
         className="w-full max-w-sm rounded-lg border px-3 py-2 text-sm placeholder:text-muted-foreground border-border bg-surface text-foreground"
       />
       {tab === "ediciones" && (
-        <select
+        <FilterSelect
+          prefix="Estado"
+          ariaLabel="Filtrar por estado"
           name="status"
           defaultValue={statusValue ?? "PENDING"}
-          className="rounded-lg border px-3 py-2 text-xs font-medium border-border bg-surface text-foreground"
-        >
-          {EDICIONES_STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>Estado: {opt.label}</option>
-          ))}
-        </select>
+          options={EDICIONES_STATUS_OPTIONS}
+          containerClassName="w-full sm:w-auto"
+        />
       )}
       <button
         type="submit"

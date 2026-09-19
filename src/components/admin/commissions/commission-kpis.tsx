@@ -16,9 +16,9 @@ export function CommissionKpiCards({ kpis }: { kpis: CommissionKpis }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       <KpiCard label="Comisiones pendientes" value={String(kpis.pendingCount)} />
-      <KpiCard label="Comisiones elegibles" value={String(kpis.eligibleCount)} />
+      <KpiCard label="Comisiones de ventas cobradas" value={String(kpis.eligibleCount)} />
       <KpiCard label="Monto pendiente" value={formatCents(kpis.pendingAmountCents)} />
-      <KpiCard label="Monto elegible" value={formatCents(kpis.eligibleAmountCents)} />
+      <KpiCard label="Monto de ventas cobradas" value={formatCents(kpis.eligibleAmountCents)} />
       <KpiCard label="Ventas con comisión" value={String(kpis.salesWithCommissionCount)} />
       <KpiCard label="Configuración faltante" value={String(kpis.missingConfigCount)} tone="warn" />
     </div>

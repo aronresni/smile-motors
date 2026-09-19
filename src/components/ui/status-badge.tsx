@@ -4,8 +4,10 @@ import { cn } from "@/lib/utils";
  * Distintivo de estado ÚNICO de la aplicación. Un mismo vocabulario visual
  * para todos los módulos — el significado del color es constante:
  *   neutral → borrador / inactivo      warning → requiere acción / en curso
- *   brand   → hito comercial (VENDIDA)  info    → avanzado, aún no final
- *   success → completado / final        danger  → bloqueado / rechazado
+ *   brand   → hito comercial destacado  info    → avanzado / cerrado (PAGADA)
+ *   success → completado / confirmado   danger  → bloqueado / rechazado
+ * Ventas: BORRADOR gris · PENDIENTE naranja · VENDIDA verde · PAGADA azul ·
+ * CANCELADA rojo.
  */
 export type StatusTone = "neutral" | "brand" | "success" | "warning" | "danger" | "info";
 
@@ -25,8 +27,8 @@ const DEFS: Record<StatusDomain, Record<string, Entry>> = {
   sale: {
     DRAFT: { label: "Borrador", tone: "neutral" },
     PENDING: { label: "Pendiente", tone: "warning" },
-    SOLD: { label: "Vendida", tone: "brand" },
-    PAID: { label: "Pagada", tone: "success" },
+    SOLD: { label: "Vendida", tone: "success" },
+    PAID: { label: "Pagada", tone: "info" },
     CANCELLED: { label: "Cancelada", tone: "danger" },
   },
   contract: {
@@ -52,8 +54,8 @@ const DEFS: Record<StatusDomain, Record<string, Entry>> = {
     SETTLED: { label: "Liquidado", tone: "success" },
   },
   commission: {
-    PENDING: { label: "Pendiente", tone: "warning" },
-    ELIGIBLE: { label: "Elegible", tone: "success" },
+    PENDING: { label: "Venta por cobrar", tone: "warning" },
+    ELIGIBLE: { label: "Venta cobrada", tone: "success" },
     VOID: { label: "Anulada", tone: "neutral" },
   },
   logistics: {

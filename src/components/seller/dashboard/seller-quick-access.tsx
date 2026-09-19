@@ -52,7 +52,7 @@ export function SellerQuickAccess() {
     <nav aria-label="Accesos rápidos" className="grid grid-cols-3 gap-2.5 sm:gap-3">
       <Tile href={ROUTES.sellerVentaNueva} label="Nueva venta" hint="Registrar una operación" icon={<PlusIcon size={20} />} primary />
       <Tile href={ROUTES.sellerVentas} label="Mis ventas" hint="Estado de cada venta" icon={<ReceiptIcon size={20} />} />
-      <Tile href={ROUTES.sellerComisiones} label="Comisiones" hint="Pendientes y elegibles" icon={<PercentIcon size={20} />} />
+      <Tile href={ROUTES.sellerComisiones} label="Comisiones" hint="Confirmadas y por cobrar" icon={<PercentIcon size={20} />} />
     </nav>
   );
 }

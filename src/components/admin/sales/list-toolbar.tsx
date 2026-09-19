@@ -1,5 +1,6 @@
 "use client";
 
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -57,8 +58,6 @@ export function AdminSalesListToolbar({ sellers }: { sellers: AdminSellerOption[
   }, [pathname, router]);
 
   const filtersActive = hasActiveAdminSalesListFilters(query);
-  const selectClass =
-    "w-full rounded-lg border px-3 py-2 text-xs font-medium border-border bg-surface text-foreground sm:w-auto";
 
   return (
     <div
@@ -89,61 +88,49 @@ export function AdminSalesListToolbar({ sellers }: { sellers: AdminSellerOption[
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-        <select
-          aria-label="Filtrar por período"
+        <FilterSelect
+          ariaLabel="Filtrar por período"
+          prefix="Período"
           value={query.period === "custom" ? "all" : query.period}
-          onChange={(e) => navigate({ period: e.target.value as AdminSalesListQuery["period"] })}
-          className={selectClass}
-        >
-          {ADMIN_PERIOD_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>Período: {opt.label}</option>
-          ))}
-        </select>
+          onValueChange={(v) => navigate({ period: v as AdminSalesListQuery["period"] })}
+          options={ADMIN_PERIOD_OPTIONS}
+          className="sm:w-auto"
+        />
 
-        <select
-          aria-label="Filtrar por estado de venta"
+        <FilterSelect
+          ariaLabel="Filtrar por estado de venta"
+          prefix="Estado"
           value={query.saleStatus}
-          onChange={(e) => navigate({ saleStatus: e.target.value as AdminSalesListQuery["saleStatus"] })}
-          className={selectClass}
-        >
-          {ADMIN_SALE_STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>Estado: {opt.label}</option>
-          ))}
-        </select>
+          onValueChange={(v) => navigate({ saleStatus: v as AdminSalesListQuery["saleStatus"] })}
+          options={ADMIN_SALE_STATUS_OPTIONS}
+          className="sm:w-auto"
+        />
 
-        <select
-          aria-label="Filtrar por estado de cobro"
+        <FilterSelect
+          ariaLabel="Filtrar por estado de cobro"
+          prefix="Cobro"
           value={query.collection}
-          onChange={(e) => navigate({ collection: e.target.value as AdminSalesListQuery["collection"] })}
-          className={selectClass}
-        >
-          {ADMIN_COLLECTION_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>Cobro: {opt.label}</option>
-          ))}
-        </select>
+          onValueChange={(v) => navigate({ collection: v as AdminSalesListQuery["collection"] })}
+          options={ADMIN_COLLECTION_OPTIONS}
+          className="sm:w-auto"
+        />
 
-        <select
-          aria-label="Filtrar por financiación"
+        <FilterSelect
+          ariaLabel="Filtrar por financiación"
+          prefix="Financiación"
           value={query.financing}
-          onChange={(e) => navigate({ financing: e.target.value as AdminSalesListQuery["financing"] })}
-          className={selectClass}
-        >
-          {ADMIN_FINANCING_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>Financiación: {opt.label}</option>
-          ))}
-        </select>
+          onValueChange={(v) => navigate({ financing: v as AdminSalesListQuery["financing"] })}
+          options={ADMIN_FINANCING_OPTIONS}
+          className="sm:w-auto"
+        />
 
-        <select
-          aria-label="Filtrar por vendedor"
+        <FilterSelect
+          ariaLabel="Filtrar por vendedor"
           value={query.sellerId ?? ""}
-          onChange={(e) => navigate({ sellerId: e.target.value || null })}
-          className={selectClass}
-        >
-          <option value="">Vendedor: todos</option>
-          {sellers.map((s) => (
-            <option key={s.id} value={s.id}>{s.fullName ?? s.id}</option>
-          ))}
-        </select>
+          onValueChange={(v) => navigate({ sellerId: v || null })}
+          options={[{ value: "", label: "Vendedor: todos" }, ...sellers.map((s) => ({ value: s.id, label: s.fullName ?? s.id }))]}
+          className="sm:w-auto"
+        />
       </div>
     </div>
   );

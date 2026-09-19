@@ -2,6 +2,7 @@ import {
   COMMISSION_STATUS_OPTIONS,
   type CommissionListQuery,
 } from "@/lib/admin/commissions-list-params";
+import { FilterSelect } from "@/components/ui/filter-select";
 
 /** Búsqueda + filtro de estado server-side (formulario GET nativo, sin JS
  * — mismo patrón ya usado en el Centro de Aprobaciones). */
@@ -15,15 +16,14 @@ export function CommissionListToolbar({ query }: { query: CommissionListQuery })
         placeholder="Buscar por N° de venta, vendedor, producto o tracking…"
         className="w-full max-w-sm rounded-lg border px-3 py-2 text-sm placeholder:text-muted-foreground border-border bg-surface text-foreground"
       />
-      <select
+      <FilterSelect
+        prefix="Estado"
+        ariaLabel="Filtrar por estado"
         name="status"
         defaultValue={query.status}
-        className="rounded-lg border px-3 py-2 text-xs font-medium border-border bg-surface text-foreground"
-      >
-        {COMMISSION_STATUS_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>Estado: {opt.label}</option>
-        ))}
-      </select>
+        options={COMMISSION_STATUS_OPTIONS}
+        containerClassName="w-full sm:w-auto"
+      />
       <button
         type="submit"
         className="shrink-0 rounded-lg border px-3 py-2 text-xs font-medium border-border text-text-secondary hover:bg-surface-elevated"

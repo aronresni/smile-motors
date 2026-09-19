@@ -83,7 +83,7 @@ export function LiquidationLifecycleActions({
               disabled={busy}
               onClick={() => void run(() => refreshLiquidationDraft(liquidationId), "Liquidación actualizada.")}
             >
-              Refrescar comisiones elegibles
+              Refrescar comisiones confirmadas
             </Button>
             {weekClosed && (
               <Button

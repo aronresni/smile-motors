@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { emptyCommissionPreview, type CommissionPreview } from "@/lib/sales/commission-preview";
 import {
   SALES_LIST_PAGE_SIZE,
   resolveSalesListDateRange,
@@ -15,8 +16,11 @@ import {
  * - Aislamiento: la RPC filtra por `auth.uid()` y la RLS de `sales` vuelve a
  *   restringir. Nunca se pasa un `sellerId` del cliente.
  * - El estado (`SellerSalesListQuery`) proviene de la query string de la URL.
- * - Estado comercial: DRAFT | PENDING | SOLD | PAID (+ CANCELLED, sin uso real
- *   todavía). "Volumen vendido" / "Unidades" del resumen solo cuentan SOLD+PAID.
+ * - Estado comercial: DRAFT | PENDING | SOLD | PAID | CANCELLED — TODAS las
+ *   ventas del vendedor, confirmadas o no. "Volumen vendido" / "Unidades" del
+ *   resumen solo cuentan SOLD+PAID.
+ * - Comisión de cada venta (`seller_sale_commission_previews`): congelada en
+ *   VENDIDA/PAGADA; ESTIMADA (no liquidable) en BORRADOR/PENDIENTE.
  */
 
 export type SaleListStatus = "DRAFT" | "PENDING" | "SOLD" | "PAID" | string;
@@ -63,6 +67,8 @@ export interface SellerSaleListItem {
   units: SellerSaleListUnit[];
   saleTotalCents: number;
   financing: SellerSaleListFinancing;
+  /** Comisión mostrada: congelada, estimada, "sin calcular" o "sin comisión". */
+  commission: CommissionPreview;
 }
 
 export interface SellerSalesListSummary {
@@ -134,6 +140,7 @@ const STATUS_TO_DB: Record<SellerSalesListQuery["status"], string> = {
   pending: "PENDING",
   sold: "SOLD",
   paid: "PAID",
+  cancelled: "CANCELLED",
 };
 
 const OPERATION_TO_DB: Record<SellerSalesListQuery["operation"], string> = {
@@ -202,6 +209,14 @@ export async function getSellerSalesList(
   const pageSize = rpc.pageSize || SALES_LIST_PAGE_SIZE;
   const totalCount = rpc.totalCount ?? 0;
 
+  // Comisión de las ventas de esta página (la RPC vuelve a exigir dueño o admin).
+  const ids = (rpc.items ?? []).map((it) => it.saleId);
+  const { data: previewData } = ids.length
+    ? await supabase.rpc("seller_sale_commission_previews", { p_sale_ids: ids })
+    : { data: null };
+  const previews =
+    ((previewData as unknown as { ok?: boolean; items?: Record<string, CommissionPreview> } | null)?.items) ?? {};
+
   return {
     items: (rpc.items ?? []).map((it) => ({
       saleId: it.saleId,
@@ -232,6 +247,7 @@ export async function getSellerSalesList(
         signed: it.financing?.signed ?? 0,
         accredited: it.financing?.accredited ?? 0,
       },
+      commission: previews[it.saleId] ?? emptyCommissionPreview(),
     })),
     page: rpc.page || query.page,
     pageSize,

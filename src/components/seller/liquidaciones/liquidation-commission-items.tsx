@@ -6,11 +6,11 @@ function signedCents(cents: number): string {
   return cents > 0 ? `+${formatted}` : cents < 0 ? `-${formatted}` : formatted;
 }
 
-/** "COMISIONES A LIQUIDAR" — solo comisiones ya ELIGIBLE, reclamadas por
+/** "COMISIONES A LIQUIDAR" — comisiones de ventas confirmadas (VENDIDAS) en la semana, reclamadas por
  * esta liquidación. Compartida entre Admin y Seller. */
 export function LiquidationCommissionItems({ items }: { items: LiquidationCommissionItem[] }) {
   if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">Sin comisiones elegibles reclamadas todavía.</p>;
+    return <p className="text-sm text-muted-foreground">Sin comisiones de ventas confirmadas en esta liquidación todavía.</p>;
   }
   return (
     <div className="overflow-hidden rounded-xl border border-border">

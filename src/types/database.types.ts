@@ -2187,7 +2187,12 @@ export type Database = {
         Args: { p_fixed_commission: number; p_fixed_price: number }
         Returns: boolean
       }
+      _sale_commission_preview: { Args: { p_sale_id: string }; Returns: Json }
       _sale_pricing_errors: { Args: { p_sale_id: string }; Returns: string[] }
+      _weekly_sale_row: {
+        Args: { p_counted: string[]; p_sale_id: string }
+        Returns: Json
+      }
       accept_seller_invitation: { Args: never; Returns: Json }
       admin_actionable_financing_contracts: {
         Args: never
@@ -2867,6 +2872,10 @@ export type Database = {
         Returns: Json
       }
       seller_liquidation_list: { Args: never; Returns: Json }
+      seller_sale_commission_previews: {
+        Args: { p_sale_ids: string[] }
+        Returns: Json
+      }
       seller_sales_list: {
         Args: {
           p_end_date?: string
@@ -2879,6 +2888,10 @@ export type Database = {
           p_start_date?: string
           p_status?: string
         }
+        Returns: Json
+      }
+      seller_weekly_liquidation: {
+        Args: { p_seller_id?: string; p_week_start?: string }
         Returns: Json
       }
       sync_sale_payment_allocations: {

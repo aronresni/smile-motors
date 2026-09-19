@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     case "sellers": {
       const items = await getSellersReport(range);
       const csv = toCsv(
-        ["Vendedor", "Ventas", "Unidades", "Ingresos", "Pending", "Sold", "Paid", "Comisión pendiente", "Comisión elegible", "Liquidado/pagado"],
+        ["Vendedor", "Ventas", "Unidades", "Ingresos", "Pending", "Sold", "Paid", "Comisión (venta por cobrar)", "Comisión (venta cobrada)", "Liquidado/pagado"],
         items.map((r) => [
           r.sellerName, r.salesCount, r.units, centsToDecimal(r.revenueCents),
           r.pendingCount, r.soldCount, r.paidCount,
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     case "commissions": {
       const c = await getCommissionsReport(range);
       const csv = toCsv(
-        ["Vendedor", "Comisión pendiente (actual)", "Comisión elegible (actual)"],
+        ["Vendedor", "Comisión venta por cobrar (actual)", "Comisión venta cobrada (actual)"],
         c.bySeller.map((r) => [r.sellerName, centsToDecimal(r.pendingCents), centsToDecimal(r.eligibleCents)]),
       );
       return csvResponse(csvFileName("comisiones", start, end), csv);

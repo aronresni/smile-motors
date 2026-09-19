@@ -17,7 +17,7 @@ export function SellerLiquidationList({ items }: { items: SellerLiquidationListI
       <div className="rounded-2xl border border-dashed border-border px-6 py-14 text-center">
         <p className="text-sm font-medium text-text-secondary">Todavía no tienes liquidaciones.</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Aparecerán aquí cuando el admin apruebe la liquidación de una semana con comisiones elegibles tuyas.
+          Aparecerán aquí cuando el admin apruebe la liquidación de una semana con ventas tuyas confirmadas.
         </p>
       </div>
     );

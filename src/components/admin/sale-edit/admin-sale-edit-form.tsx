@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { TextAreaField, TextField, SelectField, ReadOnlyField } from "@/components/ui/form-fields";
+import { SelectMenuField } from "@/components/ui/filter-select";
 import { Toggle } from "@/components/ui/toggle";
 import { toast } from "@/components/ui/toast";
 import {
@@ -139,15 +140,12 @@ function VariantSelect({
   }, [productId]);
 
   return (
-    <SelectField
+    <SelectMenuField
       label="Variante / color"
       placeholder={variants.length === 0 ? "Sin variantes" : "Sin variante"}
       disabled={disabled || variants.length === 0}
       value={value}
-      onChange={(e) => {
-        const id = e.target.value;
-        onChange(id, variants.find((v) => v.id === id)?.label ?? "");
-      }}
+      onValueChange={(id) => onChange(id, variants.find((v) => v.id === id)?.label ?? "")}
       options={variants.map((v) => ({ value: v.id, label: v.label }))}
     />
   );

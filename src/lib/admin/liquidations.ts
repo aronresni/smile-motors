@@ -8,7 +8,7 @@ import type {
 } from "@/lib/sales/liquidation-types";
 
 /**
- * Liquidación semanal — agrupa comisiones ya ELIGIBLE (`sale_commissions`)
+ * Liquidación semanal — agrupa las comisiones (`sale_commissions`) de ventas confirmadas (VENDIDAS) en la semana
  * en un pago por vendedor/semana. Esta capa NUNCA calcula montos: solo lee
  * lo que las RPC ya agregaron. Ver `20260910300000_admin_liquidaciones.sql`.
  */

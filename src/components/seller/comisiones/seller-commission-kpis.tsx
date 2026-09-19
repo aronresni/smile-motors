@@ -34,21 +34,21 @@ function Card({
   );
 }
 
-/** KPIs de comisión del vendedor — solo lo propio, solo estado actual (no
- * hay liquidación/pago todavía, per alcance de esta fase). */
+/** KPIs de comisión del vendedor — solo lo propio, por estado de COBRO de la
+ * venta. Ambas se liquidan desde que la venta queda VENDIDA. */
 export function SellerCommissionKpiCards({ kpis }: { kpis: SellerCommissionKpis }) {
   return (
     <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-      <Card label="Pendientes" icon={<LayersIcon size={16} />} hint="Ventas vendidas, aún no pagadas">
+      <Card label="Por cobrar" icon={<LayersIcon size={16} />} hint="Ventas vendidas que el cliente aún no terminó de pagar">
         {kpis.pendingCount}
       </Card>
-      <Card label="Elegibles" icon={<TargetIcon size={16} />} hint="Ventas ya pagadas por el cliente">
+      <Card label="Cobradas" icon={<TargetIcon size={16} />} hint="Ventas ya pagadas por el cliente">
         {kpis.eligibleCount}
       </Card>
-      <Card label="Total pendiente" icon={<WalletIcon size={16} />}>
+      <Card label="Total por cobrar" icon={<WalletIcon size={16} />}>
         {formatCents(kpis.pendingAmountCents)}
       </Card>
-      <Card label="Total elegible" icon={<WalletIcon size={16} />}>
+      <Card label="Total cobrado" icon={<WalletIcon size={16} />}>
         {formatCents(kpis.eligibleAmountCents)}
       </Card>
     </div>

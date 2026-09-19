@@ -1,4 +1,5 @@
 import { ROUTES } from "@/lib/constants";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { ACTIVITY_CATEGORY_OPTIONS, type ActivityListQuery } from "@/lib/admin/activity-list-params";
 import type { SellerFilterOption } from "@/lib/admin/sellers";
 
@@ -17,31 +18,13 @@ export function ActivityToolbar({ query, sellers }: { query: ActivityListQuery; 
           className="w-full rounded-md border px-2.5 py-1.5 text-sm border-border dark:bg-transparent"
         />
       </div>
-      <div>
-        <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Categoría</label>
-        <select
-          name="category"
-          defaultValue={query.category}
-          className="rounded-md border px-2.5 py-1.5 text-sm border-border dark:bg-transparent"
-        >
-          {ACTIVITY_CATEGORY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Vendedor</label>
-        <select
-          name="seller"
-          defaultValue={query.sellerId ?? ""}
-          className="rounded-md border px-2.5 py-1.5 text-sm border-border dark:bg-transparent"
-        >
-          <option value="">Todos</option>
-          {sellers.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
-      </div>
+      <FilterSelect label="Categoría" name="category" defaultValue={query.category} options={ACTIVITY_CATEGORY_OPTIONS} />
+      <FilterSelect
+        label="Vendedor"
+        name="seller"
+        defaultValue={query.sellerId ?? ""}
+        options={[{ value: "", label: "Todos" }, ...sellers.map((s) => ({ value: s.id, label: s.name }))]}
+      />
       <div>
         <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Desde</label>
         <input

@@ -30,8 +30,9 @@ export default async function AdminLiquidacionesPage({
         <div>
           <h1 className="text-lg font-semibold">Liquidaciones</h1>
           <p className="text-sm text-muted-foreground">
-            Agrupa comisiones ya ELEGIBLES en un pago semanal por vendedor. La actividad Pending/Sold es informativa —
-            nunca suma al monto a pagar.
+            Agrupa en un pago semanal por vendedor las comisiones de las ventas confirmadas (VENDIDAS) en la semana, sin
+            esperar a que el cliente termine de pagar. Las ventas PENDIENTES son informativas — nunca suman al monto a
+            pagar.
           </p>
         </div>
         <WeekNav weekStart={weekStart} currentWeekStart={currentWeek?.weekStart ?? weekStart} />

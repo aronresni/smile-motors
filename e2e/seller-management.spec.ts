@@ -1,10 +1,11 @@
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { E2E_PASSWORD } from "./credentials";
 
 const ADMIN_EMAIL = "e2e-sm-admin@motods.test";
 const SELLER_EMAIL = "e2e-sm-seller@motods.test";
-const PASSWORD = "E2E-Test-Pw-1!";
+const PASSWORD = E2E_PASSWORD;
 
 test.beforeAll(() => {
   const cwd = path.resolve(__dirname, "..");

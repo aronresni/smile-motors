@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireZone } from "@/lib/auth/session";
 import { ROUTES } from "@/lib/constants";
+import type { LiquidationAdjustmentType } from "@/lib/sales/liquidation-types";
 
 /**
  * Acciones del ciclo de vida de la liquidación semanal. TODAS pasan por RPC
@@ -47,7 +48,7 @@ export async function refreshLiquidationDraft(liquidationId: string): Promise<Rp
 
 export async function addLiquidationAdjustment(
   liquidationId: string,
-  type: "BONO" | "AJUSTE_POSITIVO" | "AJUSTE_NEGATIVO",
+  type: LiquidationAdjustmentType,
   amountCents: number,
   reason: string,
 ): Promise<RpcResult> {

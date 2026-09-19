@@ -11,6 +11,7 @@ import {
   leftoverTestProducts,
   snapshotRealProducts,
 } from "../supabase/scripts/fixtures/commission-test-products.mjs";
+import { E2E_PASSWORD } from "./credentials";
 
 /**
  * PRECIO FIJO DE VENTA + COMISIÓN FIJA — interfaz, con VALORES DE PRUEBA
@@ -30,7 +31,7 @@ try {
 
 const ADMIN_EMAIL = "e2e-smile-admin@motods.test";
 const SELLER_EMAIL = "e2e-smile-seller@motods.test";
-const PASSWORD = "Smile-E2E-Pw-1!";
+const PASSWORD = E2E_PASSWORD;
 const ZELLE = "2ab4abc7-f6a4-41a9-84b0-e0d2d0668fce";
 
 const PREFIX = `E2E COMISION UI ${Date.now().toString(36).toUpperCase()}`;

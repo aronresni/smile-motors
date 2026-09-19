@@ -1,5 +1,6 @@
 "use client";
 
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -59,36 +60,30 @@ export function FinancingListToolbar() {
           className="w-full rounded-lg border px-3 py-2 text-sm placeholder:text-muted-foreground border-border bg-surface text-foreground"
         />
       </label>
-      <select
-        aria-label="Filtrar por tipo"
+      <FilterSelect
+        ariaLabel="Filtrar por tipo"
+        prefix="Tipo"
         value={query.type}
-        onChange={(e) => navigate({ type: e.target.value as FinancingListQuery["type"] })}
-        className="rounded-lg border px-3 py-2 text-xs font-medium border-border bg-surface text-foreground"
-      >
-        {FINANCING_TYPE_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>Tipo: {opt.label}</option>
-        ))}
-      </select>
-      <select
-        aria-label="Filtrar por estado"
+        onValueChange={(v) => navigate({ type: v as FinancingListQuery["type"] })}
+        options={FINANCING_TYPE_OPTIONS}
+        containerClassName="w-full sm:w-auto"
+      />
+      <FilterSelect
+        ariaLabel="Filtrar por estado"
+        prefix="Estado"
         value={query.status}
-        onChange={(e) => navigate({ status: e.target.value as FinancingListQuery["status"] })}
-        className="rounded-lg border px-3 py-2 text-xs font-medium border-border bg-surface text-foreground"
-      >
-        {FINANCING_STATUS_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>Estado: {opt.label}</option>
-        ))}
-      </select>
-      <select
-        aria-label="Filtrar por contrato"
+        onValueChange={(v) => navigate({ status: v as FinancingListQuery["status"] })}
+        options={FINANCING_STATUS_OPTIONS}
+        containerClassName="w-full sm:w-auto"
+      />
+      <FilterSelect
+        ariaLabel="Filtrar por contrato"
+        prefix="Contrato"
         value={query.contract}
-        onChange={(e) => navigate({ contract: e.target.value as FinancingListQuery["contract"] })}
-        className="rounded-lg border px-3 py-2 text-xs font-medium border-border bg-surface text-foreground"
-      >
-        {FINANCING_CONTRACT_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>Contrato: {opt.label}</option>
-        ))}
-      </select>
+        onValueChange={(v) => navigate({ contract: v as FinancingListQuery["contract"] })}
+        options={FINANCING_CONTRACT_OPTIONS}
+        containerClassName="w-full sm:w-auto"
+      />
       {filtersActive && (
         <button
           type="button"

@@ -18,7 +18,7 @@
  *
  * Uso:
  *   npm run test:commissions -- --admin e2e-smile-admin@motods.test \
- *     --seller e2e-smile-seller@motods.test --password "…"
+ *     --seller e2e-smile-seller@motods.test
  *
  * Los valores SOLO se aplican a productos de prueba "E2E …" que este script
  * crea (vía las RPC reales de admin, las mismas que usa el panel) y elimina al
@@ -52,14 +52,14 @@ const { values } = parseArgs({
   options: {
     admin: { type: "string" },
     seller: { type: "string" },
-    password: { type: "string" },
+    password: { type: "string", default: process.env.E2E_PASSWORD },
   },
 });
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!URL || !ANON || !SERVICE || !values.admin || !values.seller || !values.password) {
-  console.error("Faltan variables de entorno o --admin/--seller/--password");
+  console.error("Faltan variables de entorno, --admin/--seller o E2E_PASSWORD (.env.local)");
   process.exit(1);
 }
 const svc = createClient(URL, SERVICE, { auth: { persistSession: false } });

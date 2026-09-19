@@ -13,6 +13,13 @@ npm run test:e2e
 
 Arranca (o reutiliza, si ya está corriendo) `next dev` en el puerto 3000.
 
+Las cuentas de prueba (`e2e-*@motods.test`) usan la contraseña de
+`E2E_PASSWORD` en `.env.local` (ver `.env.example`): **nunca** se escribe en
+el código ni en el repositorio. Las pruebas la leen con `e2e/credentials.ts` y
+los scripts de integración la toman por defecto si no se pasa `--password`.
+Si se cambia, basta con volver a correr las pruebas: `create-user.mjs`
+actualiza la contraseña de las cuentas existentes.
+
 ## Qué prueban
 
 - **`ocr-extraction.spec.ts`** — contra `/dev/ocr-fixtures`. Genera, dentro
@@ -69,6 +76,20 @@ Arranca (o reutiliza, si ya está corriendo) `next dev` en el puerto 3000.
   ficha del producto. Al final comprueba que no queda ningún producto ni
   valor de prueba y que los productos reales siguen idénticos.
 
+- **`filter-select.spec.ts`** — filtros desplegables propios (`FilterSelect`,
+  Radix): ningún `<select>` nativo visible en las barras de filtros de Admin y
+  Vendedor; menú oscuro; opciones Todas/Cuba/USA/Local; resultados, URL y
+  filtros combinados iguales que antes; teclado (Tab, Enter, flechas,
+  Home/End, Escape); menú por encima de tablas y cabeceras; 375 px (táctil ≥
+  44 px, sin desplazamiento horizontal); filtros con formulario GET y el
+  selector de variante siguen funcionando.
+- **`seller-weekly-liquidation.spec.ts`** — "Mis ventas" y "Mis
+  liquidaciones" con la regla "la comisión se liquida al quedar la venta
+  VENDIDA": ventas confirmadas que suman sin esperar a PAGADA, "Próximas a
+  confirmar" (PENDIENTES, comisión ESTIMADA no incluida) y las de semanas
+  anteriores, paso de PENDIENTE a VENDIDA, navegación semanal, venta ajena
+  bloqueada por URL, acceso del admin y 375 px.
+
 ## Valores de comisión de prueba
 
 `supabase/scripts/fixtures/commission-test-products.mjs` define el ejemplo
@@ -86,7 +107,7 @@ ni pasar a VENDIDA y aparece la alerta "Comisión faltante".
 
 > Integración de base de datos del control administrativo de ventas (no es
 > Playwright): `npm run test:admin-sales -- --admin e2e-smile-admin@motods.test
-> --seller e2e-smile-seller@motods.test --password <contraseña>` — casos 1-10
+> --seller e2e-smile-seller@motods.test` (contraseña: `E2E_PASSWORD`) — casos 1-10
 > de la tarea + regresión de los flujos del vendedor; crea y elimina sus
 > propios datos. Con los mismos argumentos:
 > `npm run test:commissions -- …` (precio fijo + comisión fija: $4,500/$500
@@ -95,7 +116,11 @@ ni pasar a VENDIDA y aparece la alerta "Comisión faltante".
 > permisos vendedor/admin, desglose y verificación de que no queda nada
 > cargado ni se tocó ningún producto real) y
 > `node --env-file=.env.local supabase/scripts/test-no-vin-stock.mjs …`
-> (ventas sin VIN ni stock físico).
+> (ventas sin VIN ni stock físico) y `npm run test:weekly -- …` (panel del
+> vendedor y liquidación semanal: la comisión entra en la semana en que la
+> venta se marca VENDIDA, nunca dos veces, mismos totales en admin y vendedor,
+> comisión liquidada bloqueada, permisos, y ventas/comisiones/liquidaciones
+> reales intactas).
 >
 > En equipos donde una política de control de aplicaciones bloquea el binario
 > nativo de SWC, Turbopack no arranca: `playwright.config.ts` usa

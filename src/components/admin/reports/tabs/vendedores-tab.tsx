@@ -54,8 +54,8 @@ export function VendedoresTab({
                   <th className="px-3 py-2.5 text-right font-medium">Pending</th>
                   <th className="px-3 py-2.5 text-right font-medium">Sold</th>
                   <th className="px-3 py-2.5 text-right font-medium">Paid</th>
-                  <th className="px-3 py-2.5 text-right font-medium">Comisión pendiente</th>
-                  <th className="px-3 py-2.5 text-right font-medium">Comisión elegible</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Comisión · venta por cobrar</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Comisión · venta cobrada</th>
                   <th className="px-3 py-2.5 text-right font-medium">Liquidado/pagado</th>
                 </tr>
               </thead>

@@ -253,7 +253,7 @@ export function AdminSaleActionPanel(p: ActionPanelProps) {
         description="El servidor vuelve a verificar que lo cobrado/acreditado coincide EXACTAMENTE con el total."
         consequences={[
           `Total ${formatCents(p.saleTotalCents)} · cobrado ${formatCents(p.collectedCents)}.`,
-          "Las comisiones pendientes de esta venta pasan a ELEGIBLES para la próxima liquidación.",
+          "Sus comisiones quedan marcadas como «venta cobrada» (ya se liquidan desde que la venta quedó VENDIDA).",
           "Queda registrada a tu nombre y no puede deshacerse desde aquí.",
         ]}
         confirmLabel="Marcar como pagada"

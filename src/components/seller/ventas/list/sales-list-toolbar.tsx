@@ -9,6 +9,7 @@ import {
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { FilterSelect } from "@/components/ui/filter-select";
 import {
   SALES_LIST_FINANCING_OPTIONS,
   SALES_LIST_OPERATION_OPTIONS,
@@ -69,9 +70,6 @@ export function SalesListToolbar() {
 
   const filtersActive = hasActiveSalesListFilters(query);
 
-  const selectClass =
-    "w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-xs font-medium text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:w-auto";
-
   return (
     <div
       className={cn(
@@ -105,90 +103,46 @@ export function SalesListToolbar() {
       </div>
 
       <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
-        <select
-          aria-label="Filtrar por período"
+        <FilterSelect
+          ariaLabel="Filtrar por período"
+          prefix="Período"
           value={query.period === "custom" ? "all" : query.period}
-          onChange={(e) =>
-            navigate({
-              period: e.target.value as SellerSalesListQuery["period"],
-            })
-          }
-          className={selectClass}
-        >
-          {SALES_LIST_PERIOD_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              Período: {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          aria-label="Filtrar por estado"
+          onValueChange={(v) => navigate({ period: v as SellerSalesListQuery["period"] })}
+          options={SALES_LIST_PERIOD_OPTIONS}
+          className="sm:w-auto"
+        />
+        <FilterSelect
+          ariaLabel="Filtrar por estado"
+          prefix="Estado"
           value={query.status}
-          onChange={(e) =>
-            navigate({
-              status: e.target.value as SellerSalesListQuery["status"],
-            })
-          }
-          className={selectClass}
-        >
-          {SALES_LIST_STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              Estado: {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          aria-label="Filtrar por tipo de operación"
+          onValueChange={(v) => navigate({ status: v as SellerSalesListQuery["status"] })}
+          options={SALES_LIST_STATUS_OPTIONS}
+          className="sm:w-auto"
+        />
+        <FilterSelect
+          ariaLabel="Filtrar por tipo de operación"
+          prefix="Operación"
           value={query.operation}
-          onChange={(e) =>
-            navigate({
-              operation: e.target.value as SellerSalesListQuery["operation"],
-            })
-          }
-          className={selectClass}
-        >
-          {SALES_LIST_OPERATION_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              Operación: {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          aria-label="Filtrar por financiación"
+          onValueChange={(v) => navigate({ operation: v as SellerSalesListQuery["operation"] })}
+          options={SALES_LIST_OPERATION_OPTIONS}
+          className="sm:w-auto"
+        />
+        <FilterSelect
+          ariaLabel="Filtrar por financiación"
+          prefix="Financiación"
           value={query.financing}
-          onChange={(e) =>
-            navigate({
-              financing: e.target.value as SellerSalesListQuery["financing"],
-            })
-          }
-          className={selectClass}
-        >
-          {SALES_LIST_FINANCING_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              Financiación: {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          aria-label="Filtrar por estado de cobro"
+          onValueChange={(v) => navigate({ financing: v as SellerSalesListQuery["financing"] })}
+          options={SALES_LIST_FINANCING_OPTIONS}
+          className="sm:w-auto"
+        />
+        <FilterSelect
+          ariaLabel="Filtrar por estado de cobro"
+          prefix="Cobro"
           value={query.settlement}
-          onChange={(e) =>
-            navigate({
-              settlement: e.target.value as SellerSalesListQuery["settlement"],
-            })
-          }
-          className={selectClass}
-        >
-          {SALES_LIST_SETTLEMENT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              Cobro: {opt.label}
-            </option>
-          ))}
-        </select>
+          onValueChange={(v) => navigate({ settlement: v as SellerSalesListQuery["settlement"] })}
+          options={SALES_LIST_SETTLEMENT_OPTIONS}
+          className="sm:w-auto"
+        />
       </div>
     </div>
   );

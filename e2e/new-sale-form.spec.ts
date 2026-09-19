@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { E2E_PASSWORD } from "./credentials";
 
 /**
  * Prueba OBLIGATORIA (no basta con `/dev/ocr-fixtures`): sube las mismas
@@ -10,7 +11,7 @@ import { expect, test, type Page } from "@playwright/test";
  */
 
 const TEST_EMAIL = "e2e-seller@motods.test";
-const TEST_PASSWORD = "E2E-Test-Pw-1!";
+const TEST_PASSWORD = E2E_PASSWORD;
 
 test.beforeAll(() => {
   // Reutiliza el script de alta existente (idempotente) — mismo patrón que

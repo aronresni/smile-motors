@@ -3,13 +3,14 @@ import { cn } from "@/lib/utils";
 import { formatCents } from "@/lib/money";
 import { ROUTES } from "@/lib/constants";
 import { ChevronRightIcon } from "@/components/seller/icons";
+import { EyeIcon } from "@/components/ui/icons";
+import { CommissionAmount } from "@/components/commission/commission-amount";
 import type { SellerSaleListFinancing, SellerSaleListItem } from "@/lib/seller/sales-list";
 import { SaleStatusBadge } from "@/components/seller/ventas/list/sale-status-badge";
 import {
   formatSaleListDate,
   paidDateLabel,
   settlementNote,
-  summarizeUnits,
   trackingCodes,
 } from "@/components/seller/ventas/list/format";
 
@@ -51,15 +52,42 @@ function FinancingBadge({ financing }: { financing: SellerSaleListFinancing }) {
   return <span className={tone}>{summary}</span>;
 }
 
+/** Producto y variante de cada unidad (hasta 2) — la venta es UNA fila. */
 function UnitsPreview({ item }: { item: SellerSaleListItem }) {
-  const { names, overflow } = summarizeUnits(item, 2);
+  const shown = item.units.slice(0, 2);
+  const overflow = Math.max(0, item.unitCount - shown.length);
+  if (shown.length === 0) return <span className="text-muted-foreground">Sin productos</span>;
   return (
-    <span className="text-text-secondary">
-      {names.join(" · ")}
+    <ul className="space-y-0.5">
+      {shown.map((u, i) => (
+        <li key={i} className="text-text-secondary">
+          {u.productName || "Sin modelo"}
+          {u.variant && <span className="text-muted-foreground"> · {u.variant}</span>}
+        </li>
+      ))}
       {overflow > 0 && (
-        <span className="text-muted-foreground"> +{overflow} más</span>
+        <li className="text-xs text-muted-foreground">
+          +{overflow} {overflow > 1 ? "unidades" : "unidad"} más
+        </li>
       )}
-    </span>
+    </ul>
+  );
+}
+
+function ViewSaleLink({ item, className }: { item: SellerSaleListItem; className?: string }) {
+  return (
+    <Link
+      href={saleHref(item.saleId)}
+      prefetch={false}
+      aria-label={"Abrir la venta " + (item.saleNumber ?? "(borrador)")}
+      className={cn(
+        "inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border-strong px-2.5 text-xs font-medium text-text-secondary transition-colors hover:border-brand/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        className,
+      )}
+    >
+      <EyeIcon size={15} />
+      Ver
+    </Link>
   );
 }
 
@@ -71,13 +99,12 @@ function DesktopTable({ items }: { items: SellerSaleListItem[] }) {
         <thead>
           <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
             <th className="px-4 py-3 font-medium">Venta / Fecha</th>
-            <th className="px-4 py-3 font-medium">Cliente</th>
-            <th className="px-4 py-3 font-medium">Productos</th>
-            <th className="px-4 py-3 text-right font-medium">Uds.</th>
+            <th className="px-4 py-3 font-medium">Comprador</th>
+            <th className="px-4 py-3 font-medium">Producto · variante</th>
             <th className="px-4 py-3 text-right font-medium">Total</th>
-            <th className="px-4 py-3 font-medium">Financiación</th>
+            <th className="px-4 py-3 text-right font-medium">Comisión</th>
             <th className="px-4 py-3 font-medium">Estado</th>
-            <th className="px-4 py-3" />
+            <th className="px-4 py-3 text-right font-medium">Acción</th>
           </tr>
         </thead>
         <tbody>
@@ -118,14 +145,14 @@ function DesktopTable({ items }: { items: SellerSaleListItem[] }) {
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right align-top tabular-nums text-text-secondary">
-                  {item.unitCount}
-                </td>
                 <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-foreground">
                   {formatCents(item.saleTotalCents)}
+                  <div className="mt-0.5 text-xs font-normal text-muted-foreground">
+                    {item.unitCount} {item.unitCount === 1 ? "ud." : "uds."}
+                  </div>
                 </td>
-                <td className="px-4 py-3 align-top text-xs">
-                  <FinancingBadge financing={item.financing} />
+                <td className="px-4 py-3 align-top">
+                  <CommissionAmount preview={item.commission} status={item.status} />
                 </td>
                 <td className="px-4 py-3 align-top">
                   <SaleStatusBadge status={item.status} />
@@ -139,16 +166,14 @@ function DesktopTable({ items }: { items: SellerSaleListItem[] }) {
                       {paidDateLabel(item)}
                     </div>
                   )}
+                  {item.financing.providers > 0 && (
+                    <div className="mt-1 text-[11px]">
+                      <FinancingBadge financing={item.financing} />
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-3 align-top text-right">
-                  <Link
-                    href={saleHref(item.saleId)}
-                    prefetch={false}
-                    className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                  >
-                    Ver
-                    <ChevronRightIcon size={14} />
-                  </Link>
+                  <ViewSaleLink item={item} />
                 </td>
               </tr>
             );
@@ -164,7 +189,6 @@ function MobileCards({ items }: { items: SellerSaleListItem[] }) {
   return (
     <ul className="space-y-2.5 lg:hidden">
       {items.map((item) => {
-        const { names, overflow } = summarizeUnits(item, 2);
         const tracks = trackingCodes(item);
         return (
           <li key={item.saleId}>
@@ -206,23 +230,8 @@ function MobileCards({ items }: { items: SellerSaleListItem[] }) {
                 </p>
               </div>
 
-              <div className="mt-2 text-sm text-text-secondary">
-                <span className="tabular-nums text-muted-foreground">
-                  {item.unitCount}{" "}
-                  {item.unitCount === 1 ? "unidad" : "unidades"}
-                </span>
-                {names.length > 0 && (
-                  <>
-                    {" · "}
-                    {names.join(" · ")}
-                    {overflow > 0 && (
-                      <span className="text-muted-foreground">
-                        {" "}
-                        +{overflow} más
-                      </span>
-                    )}
-                  </>
-                )}
+              <div className="mt-2 text-sm">
+                <UnitsPreview item={item} />
               </div>
 
               {tracks.length > 0 && (
@@ -240,13 +249,24 @@ function MobileCards({ items }: { items: SellerSaleListItem[] }) {
               )}
 
               <div className="mt-3 flex items-end justify-between gap-3">
-                <span className="text-lg font-semibold tabular-nums text-foreground">
-                  {formatCents(item.saleTotalCents)}
+                <div>
+                  <p className="text-[11px] text-muted-foreground">Total</p>
+                  <p className="text-lg font-semibold tabular-nums text-foreground">
+                    {formatCents(item.saleTotalCents)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[11px] text-muted-foreground">Comisión</p>
+                  <CommissionAmount preview={item.commission} status={item.status} />
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/70 pt-2.5">
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {formatSaleListDate(item.saleDate)}
                 </span>
-                <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                  <span className="tabular-nums">
-                    {formatSaleListDate(item.saleDate)}
-                  </span>
+                <span className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border-strong px-2.5 text-xs font-medium text-text-secondary">
+                  <EyeIcon size={15} />
+                  Ver
                   <ChevronRightIcon size={14} />
                 </span>
               </div>

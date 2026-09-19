@@ -64,6 +64,7 @@ export const CONFIRM_ERROR_MESSAGES: Record<string, string> = {
   COMMISSION_CONFIG_MISSING:
     "Falta el precio fijo de venta o la comisión fija de un producto de esta venta. Un administrador debe completarlos en la ficha del producto.",
   WEEK_NOT_CLOSED: "Esta semana todavía está en curso.",
+  COMMISSION_LOCKED: "La comisión de esa unidad ya está incluida en una liquidación: su precio no puede cambiar.",
   REQUEST_CONFLICT: "La venta cambió desde que se solicitó la edición.",
 };
 

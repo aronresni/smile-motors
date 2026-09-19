@@ -1,5 +1,6 @@
 "use client";
 
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -60,27 +61,22 @@ export function ProductListToolbar({ categories }: { categories: string[] }) {
           className="w-full rounded-lg border px-3 py-2 text-sm placeholder:text-muted-foreground border-border bg-surface text-foreground"
         />
       </label>
-      <select
-        aria-label="Filtrar por estado"
+      <FilterSelect
+        ariaLabel="Filtrar por estado"
+        prefix="Estado"
         value={query.status}
-        onChange={(e) => navigate({ status: e.target.value as ProductListQuery["status"] })}
-        className="rounded-lg border px-3 py-2 text-xs font-medium border-border bg-surface text-foreground"
-      >
-        {PRODUCT_STATUS_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>Estado: {opt.label}</option>
-        ))}
-      </select>
-      <select
-        aria-label="Filtrar por categoría"
+        onValueChange={(v) => navigate({ status: v as ProductListQuery["status"] })}
+        options={PRODUCT_STATUS_OPTIONS}
+        containerClassName="w-full sm:w-auto"
+      />
+      <FilterSelect
+        ariaLabel="Filtrar por categoría"
+        prefix="Categoría"
         value={query.category}
-        onChange={(e) => navigate({ category: e.target.value })}
-        className="rounded-lg border px-3 py-2 text-xs font-medium border-border bg-surface text-foreground"
-      >
-        <option value="ALL">Categoría: Todas</option>
-        {categories.map((c) => (
-          <option key={c} value={c}>Categoría: {c}</option>
-        ))}
-      </select>
+        onValueChange={(v) => navigate({ category: v })}
+        options={[{ value: "ALL", label: "Todas" }, ...categories.map((c) => ({ value: c, label: c }))]}
+        containerClassName="w-full sm:w-auto"
+      />
       {filtersActive && (
         <button
           type="button"

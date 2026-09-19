@@ -3,8 +3,8 @@ export type CommissionStatusFilter = "all" | "pending" | "eligible";
 
 export const COMMISSION_STATUS_OPTIONS: { value: CommissionStatusFilter; label: string }[] = [
   { value: "all", label: "Todos" },
-  { value: "pending", label: "Pendiente" },
-  { value: "eligible", label: "Elegible" },
+  { value: "pending", label: "Venta por cobrar" },
+  { value: "eligible", label: "Venta cobrada" },
 ];
 
 export const STATUS_TO_DB: Record<CommissionStatusFilter, "ALL" | "PENDING" | "ELIGIBLE"> = {

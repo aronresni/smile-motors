@@ -20,7 +20,8 @@ export type SalesListStatusFilter =
   | "draft"
   | "pending"
   | "sold"
-  | "paid";
+  | "paid"
+  | "cancelled";
 export type SalesListOperationFilter = "all" | "cuba" | "usa" | "local";
 export type SalesListFinancingFilter =
   | "all"
@@ -51,6 +52,7 @@ export const SALES_LIST_STATUS_OPTIONS: SalesListOption<SalesListStatusFilter>[]
     { value: "pending", label: "Pendiente" },
     { value: "sold", label: "Vendida" },
     { value: "paid", label: "Pagada" },
+    { value: "cancelled", label: "Cancelada" },
   ];
 
 export const SALES_LIST_OPERATION_OPTIONS: SalesListOption<SalesListOperationFilter>[] =
@@ -122,6 +124,7 @@ const STATUS_VALUES = new Set<SalesListStatusFilter>([
   "pending",
   "sold",
   "paid",
+  "cancelled",
 ]);
 const OPERATION_VALUES = new Set<SalesListOperationFilter>([
   "all",

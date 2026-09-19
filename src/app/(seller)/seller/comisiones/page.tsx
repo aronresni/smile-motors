@@ -33,7 +33,7 @@ export default async function SellerComisionesPage() {
           Comisión por venta
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Se calcula una vez al confirmar cada venta como Vendida y queda elegible cuando la venta se paga.
+          Se calcula y congela al confirmar cada venta como Vendida, y se liquida en la semana de esa confirmación (no hace falta esperar a que el cliente termine de pagar).
         </p>
       </div>
 

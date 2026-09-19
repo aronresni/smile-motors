@@ -10,11 +10,9 @@ import { computeCommission, isPricingConfigured } from "@/lib/commission";
 import { formatCents } from "@/lib/money";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import {
-  ReadOnlyField,
-  SelectField,
-} from "@/components/ui/form-fields";
+import { ReadOnlyField } from "@/components/ui/form-fields";
 import { MoneyField } from "@/components/ui/money-field";
+import { SelectMenuField } from "@/components/ui/filter-select";
 import { CommissionBreakdownList } from "@/components/commission/commission-breakdown";
 import { ModelSearchSelect } from "@/components/seller/ventas/cuba/model-search-select";
 
@@ -163,7 +161,7 @@ export function SaleUnitCard({ index, canRemove, onRemove }: SaleUnitCardProps) 
             control={control}
             name={`units.${index}.variantId`}
             render={({ field }) => (
-              <SelectField
+              <SelectMenuField
                 label="Color / acabado"
                 placeholder={
                   unit.modelName
@@ -178,8 +176,8 @@ export function SaleUnitCard({ index, canRemove, onRemove }: SaleUnitCardProps) 
                 }
                 options={variants.map((v) => ({ value: v.id, label: v.label }))}
                 value={field.value ?? ""}
-                onChange={(e) => {
-                  const id = e.target.value || null;
+                onValueChange={(selected) => {
+                  const id = selected || null;
                   field.onChange(id);
                   setValue(
                     `units.${index}.variantLabel`,
