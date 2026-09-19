@@ -83,6 +83,18 @@ const DOC_SLOTS: DocSlot[] = [
     formPath: (v) => v.buyer.documentBack.dataUrl,
   },
   {
+    subject: "CO_BUYER",
+    side: "FRONT",
+    subpath: "co-buyer/front.jpg",
+    formPath: (v) => v.coBuyer?.documentFront?.dataUrl ?? null,
+  },
+  {
+    subject: "CO_BUYER",
+    side: "BACK",
+    subpath: "co-buyer/back.jpg",
+    formPath: (v) => v.coBuyer?.documentBack?.dataUrl ?? null,
+  },
+  {
     subject: "CUBA_RECIPIENT",
     side: "FRONT",
     subpath: "recipient/front.jpg",

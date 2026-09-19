@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import { TextField } from "@/components/ui/form-fields";
 import { sellerActionErrorText } from "@/lib/admin/seller-errors";
 import { inviteSeller } from "@/app/(admin)/admin/vendedores/actions";
+import { InviteLinkBox } from "@/components/admin/sellers/invite-link-box";
 import { toast } from "@/components/ui/toast";
 
 const EMPTY = { firstName: "", lastName: "", email: "", phone: "" };
@@ -20,14 +21,14 @@ export function InviteSellerModal({ defaultOpen = false }: { defaultOpen?: boole
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
   const close = () => {
     if (busy) return;
     setOpen(false);
     setForm(EMPTY);
     setError(null);
-    setSuccess(false);
+    setInviteUrl(null);
   };
 
   const submit = async () => {
@@ -50,8 +51,8 @@ export function InviteSellerModal({ defaultOpen = false }: { defaultOpen?: boole
       return;
     }
     setBusy(false);
-    setSuccess(true);
-    toast.success("Invitación enviada.");
+    setInviteUrl(String(res.inviteUrl ?? ""));
+    toast.success("Invitación creada.");
     router.refresh();
   };
 
@@ -65,9 +66,9 @@ export function InviteSellerModal({ defaultOpen = false }: { defaultOpen?: boole
         open={open}
         onClose={close}
         title="Invitar vendedor"
-        description="Se le enviará un correo con un enlace seguro para fijar su propia contraseña. Nunca se le asigna una contraseña desde aquí."
+        description="Se crea la cuenta y se genera un enlace seguro para que el vendedor ponga su propia contraseña. Nunca se le asigna una contraseña desde aquí."
         footer={
-          success ? (
+          inviteUrl ? (
             <Button variant="primary" size="sm" onClick={close}>
               Cerrar
             </Button>
@@ -83,10 +84,15 @@ export function InviteSellerModal({ defaultOpen = false }: { defaultOpen?: boole
           )
         }
       >
-        {success ? (
-          <p className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success">
-            Invitación enviada. Aparecerá como &quot;Invitado&quot; hasta que el vendedor la acepte.
-          </p>
+        {inviteUrl ? (
+          <div className="space-y-3">
+            <p className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success">
+              Cuenta creada. Pásale este enlace al vendedor: al abrirlo crea su
+              contraseña y ya entra con su correo. Figura como &quot;Invitado&quot;
+              hasta que lo haga.
+            </p>
+            <InviteLinkBox url={inviteUrl} phone={form.phone} />
+          </div>
         ) : (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">

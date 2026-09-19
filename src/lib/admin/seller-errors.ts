@@ -7,11 +7,12 @@ const MESSAGES: Record<string, string> = {
   NOT_A_SELLER: "Esta cuenta no es de un vendedor.",
   INVALID_STATUS: "Esta acción no aplica al estado actual de la cuenta.",
   INVITATION_NOT_FOUND: "No encontramos una invitación pendiente para este vendedor.",
-  RATE_LIMITED:
-    "Se alcanzó el límite de envío de correos de Supabase. Espera unos minutos o configura un proveedor SMTP propio.",
   EMAIL_ALREADY_INVITED: "Ya existe una cuenta con ese correo.",
-  INVITE_FAILED: "No se pudo enviar la invitación. Intenta de nuevo.",
-  RECORD_FAILED: "El correo se envió, pero no se pudo registrar la invitación. Contacta soporte técnico.",
+  EMAIL_ALREADY_REGISTERED:
+    "Ya hay una cuenta activa con ese correo. Si perdió el acceso, usa las acciones de su ficha.",
+  INVITE_FAILED: "No se pudo generar el enlace de invitación. Intenta de nuevo.",
+  RECORD_FAILED:
+    "La cuenta se creó, pero no se pudo registrar la invitación. Contacta soporte técnico.",
   UNEXPECTED: "No se pudo completar la acción. Intenta de nuevo.",
 };
 

@@ -123,6 +123,13 @@ export function SaleReview({
           <Line label="Nombre" value={m.coBuyer.fullName} />
           <Line label="Teléfono" value={m.coBuyer.phone} />
           <Line label="Correo" value={m.coBuyer.email} />
+          <Line label="ID / licencia" value={m.coBuyer.documentNumber} />
+          {(m.coBuyer.docFront || m.coBuyer.docBack) && (
+            <Line
+              label="Documentos"
+              value={docFlag(m.coBuyer.docFront, m.coBuyer.docBack)}
+            />
+          )}
         </Block>
       )}
 

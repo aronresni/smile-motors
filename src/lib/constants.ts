@@ -38,6 +38,8 @@ export const ROUTES = {
   adminReportes: "/admin/reportes",
   adminLogistica: "/admin/logistica",
   authAcceptInvite: "/auth/accept-invite",
+  /** Enlace que recibe la persona invitada (canjea el token y pide contraseña). */
+  authInvite: "/auth/invitacion",
 } as const;
 
 /** Prefijos de ruta que exigen sesión + rol (zonas operativas). */

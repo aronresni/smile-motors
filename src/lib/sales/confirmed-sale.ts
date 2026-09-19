@@ -110,7 +110,15 @@ export interface ConfirmedSaleModel {
     docFront: boolean;
     docBack: boolean;
   };
-  coBuyer: { fullName: string; phone: string; email: string } | null;
+  coBuyer: {
+    fullName: string;
+    phone: string;
+    email: string;
+    documentNumber: string;
+    /** El ID del co-buyer es opcional: solo se muestra si se subió. */
+    docFront: boolean;
+    docBack: boolean;
+  } | null;
   units: ConfirmedSaleUnit[];
   extras: ConfirmedSaleExtra[];
   recipient: {
@@ -318,6 +326,9 @@ export function buildConfirmedSaleModel(
           fullName: `${str(cb.first_name)} ${str(cb.last_name)}`.trim(),
           phone: str(cb.phone),
           email: str(cb.email),
+          documentNumber: str(cb.document_number),
+          docFront: hasDoc("CO_BUYER", "FRONT"),
+          docBack: hasDoc("CO_BUYER", "BACK"),
         }
       : null,
     units,

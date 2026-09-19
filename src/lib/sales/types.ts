@@ -182,6 +182,9 @@ export interface BuyerFormData {
 }
 
 export interface CoBuyerFormData {
+  /** Opcionales: el ID del co-buyer no es obligatorio. */
+  documentFront?: DocumentUploadState;
+  documentBack?: DocumentUploadState;
   firstName: string;
   lastName: string;
   dateOfBirth: string;

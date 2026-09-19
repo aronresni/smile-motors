@@ -2,9 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createInviteLink } from "@/lib/auth/invite-link";
 import { requireZone } from "@/lib/auth/session";
-import { env } from "@/lib/env";
 import { ROUTES } from "@/lib/constants";
 
 /**
@@ -14,12 +13,16 @@ import { ROUTES } from "@/lib/constants";
  *    suspender, reactivar, deshabilitar) son RPC `SECURITY DEFINER` que
  *    vuelven a exigir `is_admin()` server-side — el mismo patrón que el
  *    resto de la app (nunca un botón deshabilitado es la única barrera).
- *  - SOLO el envío/reenvío real del correo de invitación necesita la API de
- *    administración de Supabase Auth (`inviteUserByEmail`), que exige la
- *    clave `service_role` — por eso, y solo para esas dos acciones, se usa
- *    `createAdminClient()` (servidor únicamente, ver `lib/supabase/admin.ts`).
+ *  - SOLO generar el enlace de invitación necesita la API de administración
+ *    de Supabase Auth, que exige la clave `service_role` — por eso, y solo
+ *    para esas dos acciones, se usa `createAdminClient()` (servidor
+ *    únicamente, ver `lib/supabase/admin.ts` y `lib/auth/invite-link.ts`).
  *    ANTES de tocar ese cliente, se exige la zona admin con el cliente
  *    normal (RLS) — la clave de servicio nunca decide sola quién es admin.
+ *
+ * El enlace se DEVUELVE al administrador para que se lo pase al vendedor; no
+ * se envía por el correo de Supabase (servicio de pruebas, limitado a unos
+ * pocos envíos por hora) ni se guarda en la base.
  */
 
 export interface RpcResult {
@@ -33,11 +36,6 @@ function revalidateSellers(sellerId?: string) {
   if (sellerId) revalidatePath(`${ROUTES.adminVendedores}/${sellerId}`);
 }
 
-function inviteRedirectUrl(): string {
-  const accept = encodeURIComponent(ROUTES.authAcceptInvite);
-  return `${env.NEXT_PUBLIC_SITE_URL}${ROUTES.authCallback}?redirectTo=${accept}`;
-}
-
 export interface InviteSellerInput {
   firstName: string;
   lastName: string;
@@ -45,9 +43,10 @@ export interface InviteSellerInput {
   phone?: string;
 }
 
-/** INVITAR VENDEDOR — envía la invitación por correo (Supabase Auth) y
- * registra la trazabilidad. Rol SIEMPRE 'seller': este formulario simple no
- * permite invitar administradores. */
+/** INVITAR VENDEDOR — crea la cuenta en estado INVITADO, registra la
+ * trazabilidad y devuelve el ENLACE para que el administrador se lo pase al
+ * vendedor. Rol SIEMPRE 'seller': este formulario simple no permite invitar
+ * administradores. */
 export async function inviteSeller(input: InviteSellerInput): Promise<RpcResult> {
   const ctx = await requireZone("admin");
 
@@ -57,38 +56,24 @@ export async function inviteSeller(input: InviteSellerInput): Promise<RpcResult>
     return { ok: false, code: "INVALID_INPUT" };
   }
 
-  const adminAuth = createAdminClient();
-  const { data: inv, error: inviteErr } = await adminAuth.auth.admin.inviteUserByEmail(email, {
-    data: {
-      full_name: fullName,
-      role: "seller",
-      account_status: "INVITED",
-      phone: input.phone?.trim() || undefined,
-    },
-    redirectTo: inviteRedirectUrl(),
+  const invite = await createInviteLink(email, {
+    full_name: fullName,
+    role: "seller",
+    account_status: "INVITED",
+    phone: input.phone?.trim() || undefined,
   });
-
-  if (inviteErr || !inv?.user) {
-    // No se expone el error crudo de Supabase (puede incluir detalles internos).
-    const code =
-      inviteErr?.status === 429
-        ? "RATE_LIMITED"
-        : inviteErr?.message?.toLowerCase().includes("already")
-          ? "EMAIL_ALREADY_INVITED"
-          : "INVITE_FAILED";
-    return { ok: false, code };
-  }
+  if (!invite.ok) return { ok: false, code: invite.code };
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("admin_record_seller_invitation", {
-    p_seller_id: inv.user.id,
+    p_seller_id: invite.link.userId,
     p_email: email,
   });
   if (error || !data) return { ok: false, code: "RECORD_FAILED" };
 
   revalidateSellers();
   void ctx; // ya validado arriba; se mantiene por claridad del flujo
-  return data as RpcResult;
+  return { ...(data as RpcResult), inviteUrl: invite.link.url };
 }
 
 /** REENVIAR INVITACIÓN — reutiliza el MISMO usuario/perfil, nunca crea uno nuevo. */
@@ -104,21 +89,15 @@ export async function resendSellerInvitation(sellerId: string): Promise<RpcResul
   if (!profile?.email) return { ok: false, code: "SELLER_NOT_FOUND" };
   if (profile.account_status !== "INVITED") return { ok: false, code: "INVALID_STATUS" };
 
-  const adminAuth = createAdminClient();
-  const { error: inviteErr } = await adminAuth.auth.admin.inviteUserByEmail(profile.email, {
-    data: { account_status: "INVITED" },
-    redirectTo: inviteRedirectUrl(),
-  });
-  if (inviteErr) {
-    const code = inviteErr.status === 429 ? "RATE_LIMITED" : "INVITE_FAILED";
-    return { ok: false, code };
-  }
+  // Genera un enlace NUEVO (el anterior deja de servir) para el MISMO usuario.
+  const invite = await createInviteLink(profile.email);
+  if (!invite.ok) return { ok: false, code: invite.code };
 
   const { data, error } = await supabase.rpc("admin_touch_seller_invitation", { p_seller_id: sellerId });
   if (error || !data) return { ok: false, code: "RECORD_FAILED" };
 
   revalidateSellers(sellerId);
-  return data as RpcResult;
+  return { ...(data as RpcResult), inviteUrl: invite.link.url };
 }
 
 export async function cancelSellerInvitation(sellerId: string): Promise<RpcResult> {

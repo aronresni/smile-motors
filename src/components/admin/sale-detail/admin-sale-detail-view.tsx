@@ -167,7 +167,13 @@ export function AdminSaleDetailView({
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Fact label="Nombre" value={m.coBuyer.fullName} />
                   <Fact label="Teléfono" value={m.coBuyer.phone} />
+                  <Fact label="Documento" value={m.coBuyer.documentNumber} />
                 </div>
+                {(m.coBuyer.docFront || m.coBuyer.docBack) && (
+                  <div className="mt-3">
+                    <DocPresence front={m.coBuyer.docFront} back={m.coBuyer.docBack} />
+                  </div>
+                )}
               </div>
             )}
             <div className="mt-4 border-t border-border pt-3">

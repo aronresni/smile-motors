@@ -49,6 +49,10 @@ export const buyerSchema = z.object({
  * Co-buyer (opcional)
  * ------------------------------------------------------------------------ */
 export const coBuyerSchema = z.object({
+  // Fotos del ID: OPCIONALES — sirven para autocompletar los datos y quedan
+  // guardadas con la venta (sale_documents, subject_type = 'CO_BUYER').
+  documentFront: documentStateSchema.optional(),
+  documentBack: documentStateSchema.optional(),
   firstName: z.string().trim().min(1, "El nombre es obligatorio"),
   lastName: z.string().trim().min(1, "Los apellidos son obligatorios"),
   dateOfBirth: z.string(),

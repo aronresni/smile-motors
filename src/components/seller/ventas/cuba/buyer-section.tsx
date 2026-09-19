@@ -1,16 +1,12 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
 import {
   Controller,
   useFormContext,
   type FieldPath,
 } from "react-hook-form";
 import type { CubaSaleFormValues } from "@/lib/sales/schema";
-import type {
-  ExtractedDocumentData,
-  ExtractionFieldSource,
-} from "@/lib/sales/types";
+import type { ExtractedDocumentData } from "@/lib/sales/types";
 import { extractBuyerId } from "@/lib/sales/document-extraction";
 import { US_STATES } from "@/lib/sales/us-states";
 import {
@@ -21,6 +17,7 @@ import { PhoneField } from "@/components/ui/phone-field";
 import { DocumentUploader } from "@/components/seller/ventas/document-uploader";
 import { useIdExtraction } from "@/components/seller/ventas/cuba/use-id-extraction";
 import { OcrBanner } from "@/components/seller/ventas/cuba/ocr-banner";
+import { useDocumentAutofill } from "@/components/seller/ventas/cuba/use-document-autofill";
 
 const FIELD_MAP: [keyof ExtractedDocumentData, FieldPath<CubaSaleFormValues>][] =
   [
@@ -47,85 +44,20 @@ const FIELD_LABELS: Partial<Record<FieldPath<CubaSaleFormValues>, string>> = {
   "buyer.postalCode": "Código postal",
 };
 
-/** pdf417 gana a OCR; el reverso (donde está el PDF417) gana al frente. */
-const SOURCE_RANK: Record<ExtractionFieldSource, number> = {
-  "ocr-front": 1,
-  "ocr-back": 2,
-  "mrz-back": 2, // sin uso en licencias US; mismo nivel que ocr-back por si acaso
-  pdf417: 3,
-};
-
 export function BuyerSection() {
   const {
     register,
     control,
     getValues,
-    setValue,
     formState: { errors },
   } = useFormContext<CubaSaleFormValues>();
 
-  const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
-  // Campos donde el documento sugiere un valor distinto al que ya hay en el
-  // formulario (y no es una corrección de un autofill previo): NUNCA se
-  // pisa en silencio, se marca para que el vendedor lo revise.
-  const [conflicts, setConflicts] = useState<string[]>([]);
-  // Recuerda qué valor pusimos y con qué origen, para poder mejorar un dato de
-  // OCR con PDF417 SIN pisar una corrección manual del vendedor.
-  const autoFillsRef = useRef<
-    Record<string, { source: ExtractionFieldSource; value: string }>
-  >({});
-
-  const applyBuyerData = useCallback(
-    (
-      data: ExtractedDocumentData,
-      _fieldsDetected: string[],
-      sources: Partial<Record<string, ExtractionFieldSource>>,
-    ) => {
-      const filled: string[] = [];
-      const newConflicts: string[] = [];
-      for (const [key, path] of FIELD_MAP) {
-        const value = data[key];
-        if (!value) continue;
-
-        const current = String(getValues(path) ?? "");
-        const prior = autoFillsRef.current[path];
-        const newSource: ExtractionFieldSource = sources[key] ?? "ocr-front";
-        const isEmpty = current.trim() === "";
-        const isUntouchedAutofill =
-          prior !== undefined && current === prior.value;
-        const strongerSource =
-          prior !== undefined &&
-          SOURCE_RANK[newSource] > SOURCE_RANK[prior.source];
-
-        if (!isEmpty && !(isUntouchedAutofill && strongerSource)) {
-          // Un valor manual (o ya corregido) distinto al leído: se conserva,
-          // pero se señala para revisión en vez de ignorarlo en silencio.
-          if (!isEmpty && current !== value) {
-            newConflicts.push(FIELD_LABELS[path] ?? path);
-          }
-          continue;
-        }
-
-        setValue(path, value as never, { shouldDirty: true });
-        autoFillsRef.current[path] = { source: newSource, value };
-        filled.push(path);
-      }
-      if (filled.length) {
-        setAutoFilled((prev) => {
-          const next = new Set(prev);
-          filled.forEach((f) => next.add(f));
-          return next;
-        });
-      }
-      setConflicts(newConflicts);
-    },
-    [getValues, setValue],
+  const { autoFilled, conflicts, apply } = useDocumentAutofill<ExtractedDocumentData>(
+    FIELD_MAP,
+    FIELD_LABELS,
   );
 
-  const ocr = useIdExtraction<ExtractedDocumentData>(
-    extractBuyerId,
-    applyBuyerData,
-  );
+  const ocr = useIdExtraction<ExtractedDocumentData>(extractBuyerId, apply);
 
   const buyerErr = errors.buyer;
 

@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { createClient } from "@supabase/supabase-js";
 import { expect, test, type Page } from "@playwright/test";
 import { E2E_PASSWORD } from "./credentials";
 
@@ -129,6 +130,109 @@ test.describe("Nueva venta (Cuba) — fotos desde la galería", () => {
     await expect(page.locator('input[name="buyer.city"]')).toHaveValue("Kissimmee");
     await expect(page.locator('select[name="buyer.state"]')).toHaveValue("FL");
     await expect(page.locator('input[name="buyer.postalCode"]')).toHaveValue("34746");
+  });
+});
+
+/** Reverso sintético de baja resolución (licencia inventada "Rolando
+ * Quintana Bermudez") generado en el arnés local. */
+async function lowResBack(page: Page): Promise<Buffer> {
+  await page.goto("/dev/ocr-fixtures");
+  await page.getByTestId("us-license-generate-synthetic-lowres").click();
+  const section = page.getByTestId("us-license");
+  await expect(section.getByText("Quitar")).toHaveCount(1, { timeout: 20_000 });
+  const back = await section.getByAltText("Reverso").getAttribute("src");
+  if (!back) throw new Error("No se generó el reverso sintético");
+  return dataUrlToBuffer(back);
+}
+
+async function openCoBuyer(page: Page) {
+  const section = page.locator("#section-cobuyer");
+  await section.getByRole("button", { name: /Co-buyer/ }).first().click();
+  await section.getByRole("button", { name: "+ Agregar co-buyer" }).click();
+  await expect(section.getByText("ID del co-buyer — frente")).toBeVisible();
+  return section;
+}
+
+test.describe("Nueva venta (Cuba) — co-buyer desde la foto del ID", () => {
+  test("la foto del ID completa nombre, apellido, nacimiento y N.º del co-buyer, sin tocar al comprador ni pisar lo escrito a mano", async ({ page }) => {
+    const back = await lowResBack(page);
+    await login(page);
+    await page.goto("/seller/ventas/nueva/cuba");
+    const section = await openCoBuyer(page);
+
+    await uploadDocument(page, section.locator("input[type='file']").nth(1), back, "co-reverso.jpg", "image/jpeg");
+    await expect(page.locator('input[name="coBuyer.firstName"]')).toHaveValue("Rolando", { timeout: 45_000 });
+    await expect(page.locator('input[name="coBuyer.lastName"]')).toHaveValue("Quintana Bermudez");
+    await expect(page.locator('input[name="coBuyer.dateOfBirth"]')).toHaveValue("1971-07-09");
+    await expect(page.locator('input[name="coBuyer.documentNumber"]')).toHaveValue("R512448907710");
+    // El comprador principal no se toca.
+    await expect(page.locator('input[name="buyer.firstName"]')).toHaveValue("");
+    await expect(page.locator('input[name="buyer.documentNumber"]')).toHaveValue("");
+
+    // Una corrección manual se respeta: al volver a leer el ID, se avisa.
+    await page.locator('input[name="coBuyer.firstName"]').fill("Rolo");
+    const chooser = page.waitForEvent("filechooser");
+    await section.getByRole("button", { name: "Reemplazar" }).click();
+    await (await chooser).setFiles({ name: "co-reverso.jpg", mimeType: "image/jpeg", buffer: back });
+    await page.getByRole("button", { name: "Guardar", exact: true }).click();
+    await expect(section.getByRole("alert")).toContainText("Nombre/s", { timeout: 45_000 });
+    await expect(page.locator('input[name="coBuyer.firstName"]')).toHaveValue("Rolo");
+  });
+
+  test("las fotos del co-buyer se guardan con el borrador, vuelven al reabrirlo y se borran al quitar el co-buyer", async ({ page }) => {
+    const svc = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+      auth: { persistSession: false },
+    });
+    const back = await lowResBack(page);
+    await login(page);
+    await page.goto("/seller/ventas/nueva/cuba");
+    let section = await openCoBuyer(page);
+    await uploadDocument(page, section.locator("input[type='file']").nth(1), back, "co-reverso.jpg", "image/jpeg");
+    await expect(page.locator('input[name="coBuyer.firstName"]')).toHaveValue("Rolando", { timeout: 45_000 });
+
+    await page.getByRole("button", { name: "Guardar borrador" }).first().click();
+    await page.waitForURL(/\/seller\/ventas\/[0-9a-f-]{36}$/, { timeout: 30_000 });
+    const saleId = page.url().split("/").pop()!;
+    let sellerId = "";
+    try {
+      const { data: sale } = await svc.from("sales").select("seller_id").eq("id", saleId).single();
+      sellerId = sale!.seller_id as string;
+      const coDocs = async () =>
+        (await svc.from("sale_documents").select("side, party_id, storage_path").eq("sale_id", saleId).eq("subject_type", "CO_BUYER")).data ?? [];
+      await expect.poll(async () => (await coDocs()).length, { timeout: 30_000 }).toBe(1);
+      const [doc] = await coDocs();
+      const { data: party } = await svc.from("sale_parties").select("id, first_name").eq("sale_id", saleId).eq("party_role", "CO_BUYER").single();
+      expect(doc.side).toBe("BACK");
+      expect(doc.party_id).toBe(party!.id);
+      expect(party!.first_name).toBe("Rolando");
+      expect(doc.storage_path).toBe(`${sellerId}/${saleId}/co-buyer/back.jpg`);
+      const { data: files } = await svc.storage.from("sale-documents").list(`${sellerId}/${saleId}/co-buyer`);
+      expect((files ?? []).map((f) => f.name)).toEqual(["back.jpg"]);
+
+      // Al reabrir el borrador, la foto del co-buyer vuelve a su lugar.
+      await page.reload();
+      section = page.locator("#section-cobuyer");
+      await section.getByRole("button", { name: /Co-buyer/ }).first().click();
+      await expect(section.getByAltText("ID del co-buyer — reverso")).toBeVisible({ timeout: 20_000 });
+      await expect(page.locator('input[name="coBuyer.firstName"]')).toHaveValue("Rolando");
+
+      // Quitar el co-buyer y guardar: su documento y su archivo desaparecen.
+      await section.getByRole("button", { name: "Quitar co-buyer" }).click();
+      await page.getByRole("button", { name: "Guardar borrador" }).first().click();
+      await expect.poll(async () => (await coDocs()).length, { timeout: 30_000 }).toBe(0);
+      await expect
+        .poll(async () => ((await svc.storage.from("sale-documents").list(`${sellerId}/${saleId}/co-buyer`)).data ?? []).length, { timeout: 30_000 })
+        .toBe(0);
+    } finally {
+      // La prueba borra todo lo que creó: archivos y borrador.
+      if (sellerId) {
+        await svc.storage.from("sale-documents").remove(
+          ["buyer/front.jpg", "buyer/back.jpg", "co-buyer/front.jpg", "co-buyer/back.jpg", "recipient/front.jpg", "recipient/back.jpg"]
+            .map((p) => `${sellerId}/${saleId}/${p}`),
+        );
+      }
+      await svc.from("sales").delete().eq("id", saleId);
+    }
   });
 });
 

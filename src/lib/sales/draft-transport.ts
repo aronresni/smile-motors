@@ -429,6 +429,10 @@ export function hydrateFormValues(
     if (!doc) continue;
     if (d.subjectType === "BUYER" && d.side === "FRONT") next.buyer.documentFront = doc;
     else if (d.subjectType === "BUYER" && d.side === "BACK") next.buyer.documentBack = doc;
+    else if (d.subjectType === "CO_BUYER" && d.side === "FRONT" && next.coBuyer)
+      next.coBuyer.documentFront = doc;
+    else if (d.subjectType === "CO_BUYER" && d.side === "BACK" && next.coBuyer)
+      next.coBuyer.documentBack = doc;
     else if (d.subjectType === "CUBA_RECIPIENT" && d.side === "FRONT")
       next.cubaRecipient.documentFront = doc;
     else if (d.subjectType === "CUBA_RECIPIENT" && d.side === "BACK")

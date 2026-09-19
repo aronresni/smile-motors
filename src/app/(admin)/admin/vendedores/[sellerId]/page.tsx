@@ -107,7 +107,11 @@ export default async function AdminSellerDetailPage({
       </Section>
 
       <Section title="Acciones">
-        <SellerDetailActions sellerId={sellerId} accountStatus={profile.accountStatus} />
+        <SellerDetailActions
+          sellerId={sellerId}
+          accountStatus={profile.accountStatus}
+          phone={profile.phone}
+        />
       </Section>
 
       <Section title="Resumen comercial">

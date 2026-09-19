@@ -23,6 +23,8 @@ function messageForUrlError(code: string | null): string | null {
       return "Tu sesión expiró. Inicia sesión nuevamente.";
     case "auth_callback_failed":
       return "El enlace no es válido o ya expiró. Inicia sesión o pide uno nuevo.";
+    case "invite_invalid":
+      return "Este enlace de invitación ya se usó o caducó. Pide a un administrador que te envíe uno nuevo.";
     default:
       return null;
   }

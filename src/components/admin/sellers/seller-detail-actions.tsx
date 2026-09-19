@@ -14,6 +14,7 @@ import {
   resendSellerInvitation,
   suspendSeller,
 } from "@/app/(admin)/admin/vendedores/actions";
+import { InviteLinkBox } from "@/components/admin/sellers/invite-link-box";
 import { toast } from "@/components/ui/toast";
 
 /** Acciones administrativas de la ficha de un vendedor — una por estado,
@@ -22,18 +23,26 @@ import { toast } from "@/components/ui/toast";
 export function SellerDetailActions({
   sellerId,
   accountStatus,
+  phone,
 }: {
   sellerId: string;
   accountStatus: SellerAccountStatus;
+  /** Para el atajo de WhatsApp al reenviar la invitación. */
+  phone?: string | null;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [disableOpen, setDisableOpen] = useState(false);
   const [reason, setReason] = useState("");
 
-  const run = async (fn: () => Promise<{ ok: boolean; code?: string }>, onDone?: () => void, success?: string) => {
+  const run = async (
+    fn: () => Promise<{ ok: boolean; code?: string; inviteUrl?: unknown }>,
+    onDone?: () => void,
+    success?: string,
+  ) => {
     if (busy) return;
     setBusy(true);
     setError(null);
@@ -44,6 +53,7 @@ export function SellerDetailActions({
       return;
     }
     setBusy(false);
+    setInviteUrl(typeof res.inviteUrl === "string" ? res.inviteUrl : null);
     onDone?.();
     if (success) toast.success(success);
     router.refresh();
@@ -60,7 +70,7 @@ export function SellerDetailActions({
       <div className="flex flex-wrap gap-2">
         {accountStatus === "INVITED" && (
           <>
-            <Button variant="secondary" size="sm" disabled={busy} onClick={() => void run(() => resendSellerInvitation(sellerId), undefined, "Invitación reenviada.")}>
+            <Button variant="secondary" size="sm" disabled={busy} onClick={() => void run(() => resendSellerInvitation(sellerId), undefined, "Enlace nuevo generado.")}>
               Reenviar invitación
             </Button>
             <Button
@@ -95,6 +105,14 @@ export function SellerDetailActions({
           </>
         )}
       </div>
+
+      {inviteUrl && (
+        <InviteLinkBox
+          url={inviteUrl}
+          phone={phone ?? undefined}
+          className="rounded-xl border border-border bg-surface p-3"
+        />
+      )}
 
       <Modal
         open={suspendOpen}
