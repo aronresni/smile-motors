@@ -75,6 +75,9 @@ export function isAdminNavActive(href: string, pathname: string): boolean {
 
 /** Título de contexto para la cabecera, derivado de la ruta actual. */
 export function adminSectionLabel(pathname: string): string {
+  if (pathname === ROUTES.adminNotificaciones || pathname.startsWith(`${ROUTES.adminNotificaciones}/`)) {
+    return "Notificaciones";
+  }
   for (const g of ADMIN_NAV) {
     for (const it of g.items) {
       if (it.href !== ROUTES.admin && isAdminNavActive(it.href, pathname)) return it.label;

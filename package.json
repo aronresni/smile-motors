@@ -18,7 +18,8 @@
     "supabase:stop": "supabase stop",
     "test:admin-sales": "node --env-file=.env.local supabase/scripts/test-admin-sale-control.mjs",
     "test:commissions": "node --env-file=.env.local supabase/scripts/test-commission-fixtures.mjs",
-    "test:weekly": "node --env-file=.env.local supabase/scripts/test-seller-weekly-liquidation.mjs"
+    "test:weekly": "node --env-file=.env.local supabase/scripts/test-seller-weekly-liquidation.mjs",
+    "test:notifications": "node --env-file=.env.local supabase/scripts/test-notifications.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

@@ -9,6 +9,10 @@
  *     --email persona@empresa.com --password "TEMPORAL" --role seller --name "Nombre Apellido"
  *
  * Idempotente: si el usuario ya existe, actualiza contraseña/metadata.
+ *
+ * `--sandbox`: marca la cuenta como de PRUEBAS AUTOMATIZADAS
+ * (profiles.is_sandbox). Sus notificaciones quedan en la partición sandbox y
+ * nunca llegan a usuarios reales. Solo el service role puede fijarla.
  * El perfil lo crea el trigger `handle_new_user` a partir de user_metadata.role;
  * si no apareciera, este script lo inserta.
  */
@@ -21,6 +25,7 @@ const { values } = parseArgs({
     password: { type: "string" },
     role: { type: "string", default: "seller" },
     name: { type: "string", default: "" },
+    sandbox: { type: "boolean", default: false },
   },
 });
 
@@ -98,6 +103,18 @@ if (!profile) {
   console.log("· Perfil insertado manualmente");
 } else {
   console.log("· Perfil creado por el trigger handle_new_user");
+}
+
+if (values.sandbox && profile.is_sandbox !== true) {
+  const { data, error } = await admin
+    .from("profiles")
+    .update({ is_sandbox: true })
+    .eq("id", authUser.id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  profile = data;
+  console.log("· Cuenta marcada como sandbox (pruebas automatizadas)");
 }
 
 if (profile.role !== role || profile.is_active !== true) {

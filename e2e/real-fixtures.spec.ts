@@ -40,7 +40,7 @@ test.describe("Fotos REALES (aceptación)", () => {
     if (!haveRealFixtures) return;
     execFileSync(
       "node",
-      ["--env-file=.env.local", "supabase/scripts/create-user.mjs",
+      ["--env-file=.env.local", "supabase/scripts/create-user.mjs", "--sandbox",
         "--email", TEST_EMAIL, "--password", TEST_PASSWORD, "--role", "seller", "--name", "Vendedor E2E"],
       { cwd: path.resolve(__dirname, ".."), stdio: "inherit" },
     );

@@ -13,7 +13,7 @@ test.beforeAll(() => {
   for (const [email, role] of [[ADMIN_EMAIL, "admin"], [SELLER_EMAIL, "seller"]] as const) {
     execFileSync(
       "node",
-      ["--env-file=.env.local", "supabase/scripts/create-user.mjs", "--email", email, "--password", PASSWORD, "--role", role, "--name", `${role} E2E`],
+      ["--env-file=.env.local", "supabase/scripts/create-user.mjs", "--sandbox", "--email", email, "--password", PASSWORD, "--role", role, "--name", `${role} E2E`],
       { cwd, stdio: "inherit" },
     );
   }
@@ -128,7 +128,9 @@ test.describe("Gestión de vendedores — verificación de interfaz", () => {
       await second.close();
       await guest.close();
     } finally {
-      // La prueba borra la cuenta que creó.
+      // La prueba borra lo que creó: la invitación (si no, queda huérfana al
+      // borrar el usuario) y la cuenta.
+      await svc.from("seller_invitations").delete().eq("email", email);
       const { data: users } = await svc.auth.admin.listUsers({ perPage: 200 });
       const created = users.users.find((u) => u.email === email);
       if (created) await svc.auth.admin.deleteUser(created.id);

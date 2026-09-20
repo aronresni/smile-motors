@@ -7,6 +7,7 @@ import { CommandPalette } from "@/components/admin/command-palette";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { LogOutIcon, MenuIcon, SearchIcon, ShieldIcon, XIcon } from "@/components/ui/icons";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface AdminHeaderProps {
   fullName: string | null;
@@ -101,6 +102,7 @@ export function AdminHeader({ fullName, email, approvalsCount, alertsCount }: Ad
           </button>
 
           <div className="flex shrink-0 items-center gap-2.5">
+            <NotificationBell variant="admin" />
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand-soft px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand sm:px-2.5"
               aria-label="Rol: administrador"

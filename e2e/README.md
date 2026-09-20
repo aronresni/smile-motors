@@ -20,6 +20,25 @@ los scripts de integración la toman por defecto si no se pasa `--password`.
 Si se cambia, basta con volver a correr las pruebas: `create-user.mjs`
 actualiza la contraseña de las cuentas existentes.
 
+### Aislamiento de notificaciones (cuentas sandbox)
+
+Las pruebas corren contra la base real, así que sus actores son cuentas
+**sandbox** (`profiles.is_sandbox = true`, las marca `create-user.mjs --sandbox`
+con el service role; ni el usuario ni un admin pueden cambiarlo desde la app).
+Las notificaciones respetan esa partición: la actividad de un vendedor sandbox
+solo llega a admins sandbox, un actor sandbox nunca notifica a un usuario real
+y las cuentas invitadas por un admin sandbox heredan la marca. Así ningún
+usuario real ve notificaciones, toasts ni cambios de contador de las pruebas
+mientras corren (`npm run test:notifications` lo verifica después de cada
+paso y se niega a correr si algún actor no es sandbox). Lo ideal a futuro es
+un proyecto de Supabase separado para pruebas.
+
+Los triggers de notificación solo actúan ante eventos de dominio reales:
+sesión de usuario autenticada, evento actual (no historial reinsertado) y sin
+`set_config('motods.suppress_notifications', 'on', true)` — el interruptor
+para scripts de mantenimiento que corran con sesión de usuario. Migraciones y
+scripts de servicio (sin sesión) nunca notifican.
+
 ## Qué prueban
 
 - **`ocr-extraction.spec.ts`** — contra `/dev/ocr-fixtures`. Genera, dentro

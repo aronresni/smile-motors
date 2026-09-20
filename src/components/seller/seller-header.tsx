@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-mark";
 import { ROUTES } from "@/lib/constants";
 import type { SellerIdentity } from "@/lib/seller/identity";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface SellerHeaderProps {
   seller: SellerIdentity;
@@ -11,9 +12,8 @@ interface SellerHeaderProps {
 
 /**
  * Cabecera del vendedor. En móvil lleva el logo oficial (el riel lateral solo
- * existe en escritorio). El avatar abre "Menú" (perfil, pagos, cerrar sesión).
- * Sin campana de notificaciones: no existe backend de notificaciones y un
- * botón que no hace nada sería engañoso.
+ * existe en escritorio). La campana (notificaciones personales, en vivo) queda
+ * siempre a mano junto al avatar, que abre "Menú" (perfil, pagos, cerrar sesión).
  */
 export function SellerHeader({ seller, dealerName, greeting }: SellerHeaderProps) {
   return (
@@ -33,6 +33,8 @@ export function SellerHeader({ seller, dealerName, greeting }: SellerHeaderProps
             {seller.roleLabel} · {dealerName}
           </p>
         </div>
+
+        <NotificationBell variant="seller" />
 
         <Link
           href={ROUTES.sellerMenu}

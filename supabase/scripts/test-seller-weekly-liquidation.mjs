@@ -95,7 +95,7 @@ async function realSnapshot(testSellerIds) {
 
 async function main() {
   const cwd = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-  execFileSync("node", ["--env-file=.env.local", "supabase/scripts/create-user.mjs", "--email", SELLER2, "--password", values.password, "--role", "seller", "--name", "Vendedor Smile E2E 2"], { cwd, stdio: "ignore" });
+  execFileSync("node", ["--env-file=.env.local", "supabase/scripts/create-user.mjs", "--sandbox", "--email", SELLER2, "--password", values.password, "--role", "seller", "--name", "Vendedor Smile E2E 2"], { cwd, stdio: "ignore" });
   const admin = await signIn(values.admin);
   const seller = await signIn(values.seller);
   const seller2 = await signIn(SELLER2);

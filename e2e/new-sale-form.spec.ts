@@ -21,7 +21,7 @@ test.beforeAll(() => {
     "node",
     [
       "--env-file=.env.local",
-      "supabase/scripts/create-user.mjs",
+      "supabase/scripts/create-user.mjs", "--sandbox",
       "--email", TEST_EMAIL,
       "--password", TEST_PASSWORD,
       "--role", "seller",

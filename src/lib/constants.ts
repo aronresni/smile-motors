@@ -25,6 +25,7 @@ export const ROUTES = {
   sellerMenu: "/seller/menu",
   sellerComisiones: "/seller/comisiones",
   sellerLiquidaciones: "/seller/liquidaciones",
+  sellerNotificaciones: "/seller/notificaciones",
   admin: "/admin",
   adminVentas: "/admin/ventas",
   adminVendedores: "/admin/vendedores",
@@ -37,6 +38,7 @@ export const ROUTES = {
   adminAlertas: "/admin/alertas",
   adminReportes: "/admin/reportes",
   adminLogistica: "/admin/logistica",
+  adminNotificaciones: "/admin/notificaciones",
   authAcceptInvite: "/auth/accept-invite",
   /** Enlace que recibe la persona invitada (canjea el token y pide contraseña). */
   authInvite: "/auth/invitacion",

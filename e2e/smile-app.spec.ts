@@ -30,7 +30,7 @@ test.beforeAll(() => {
   ] as const) {
     execFileSync(
       "node",
-      ["--env-file=.env.local", "supabase/scripts/create-user.mjs", "--email", email, "--password", PASSWORD, "--role", role, "--name", name],
+      ["--env-file=.env.local", "supabase/scripts/create-user.mjs", "--sandbox", "--email", email, "--password", PASSWORD, "--role", role, "--name", name],
       { cwd, stdio: "ignore" },
     );
   }

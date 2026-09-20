@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { AlertCircleIcon, AlertTriangleIcon, CheckCircleIcon, InfoIcon, XIcon } from "@/components/ui/icons";
+import { AlertCircleIcon, AlertTriangleIcon, BellIcon, CheckCircleIcon, InfoIcon, XIcon } from "@/components/ui/icons";
 
 /**
  * Notificaciones efímeras (toasts) ÚNICAS de la app. Store a nivel de módulo
@@ -11,12 +12,14 @@ import { AlertCircleIcon, AlertTriangleIcon, CheckCircleIcon, InfoIcon, XIcon } 
  * `router.push()` — `<Toaster />` vive en el layout raíz y sobrevive a la
  * navegación.
  */
-type Tone = "success" | "error" | "info" | "warning";
+type Tone = "success" | "error" | "info" | "warning" | "notice";
 export interface ToastItem {
   id: number;
   tone: Tone;
   title: string;
   description?: string;
+  /** Ruta interna: al tocar el toast se navega ahí (notificaciones). */
+  href?: string;
 }
 
 let items: ToastItem[] = [];
@@ -27,9 +30,9 @@ const EMPTY: ToastItem[] = [];
 function emit() {
   for (const l of listeners) l();
 }
-function push(tone: Tone, title: string, description?: string) {
+function push(tone: Tone, title: string, description?: string, href?: string) {
   const id = ++seq;
-  items = [...items.slice(-3), { id, tone, title, description }];
+  items = [...items.slice(-3), { id, tone, title, description, href }];
   emit();
   return id;
 }
@@ -43,6 +46,8 @@ export const toast = {
   error: (title: string, description?: string) => push("error", title, description),
   info: (title: string, description?: string) => push("info", title, description),
   warning: (title: string, description?: string) => push("warning", title, description),
+  /** Notificación en vivo: pequeña, descartable y, si trae ruta, navegable. */
+  notify: (title: string, description?: string, href?: string) => push("notice", title, description, href),
   dismiss,
 };
 
@@ -56,11 +61,13 @@ const TONE: Record<Tone, { icon: typeof InfoIcon; className: string }> = {
   error: { icon: AlertCircleIcon, className: "text-danger" },
   warning: { icon: AlertTriangleIcon, className: "text-warning" },
   info: { icon: InfoIcon, className: "text-brand" },
+  notice: { icon: BellIcon, className: "text-brand" },
 };
 
 function ToastCard({ item }: { item: ToastItem }) {
+  const router = useRouter();
   useEffect(() => {
-    const ms = item.tone === "error" ? 7000 : 4500;
+    const ms = item.tone === "error" ? 7000 : item.tone === "notice" ? 6500 : 4500;
     const t = window.setTimeout(() => dismiss(item.id), ms);
     return () => window.clearTimeout(t);
   }, [item.id, item.tone]);
@@ -72,10 +79,24 @@ function ToastCard({ item }: { item: ToastItem }) {
       className="pointer-events-auto flex w-full items-start gap-3 rounded-xl border border-border-strong bg-surface-elevated px-3.5 py-3 shadow-xl shadow-black/50 animate-pop-in"
     >
       <Icon size={18} className={cn("mt-0.5 shrink-0", className)} />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-foreground">{item.title}</p>
-        {item.description && <p className="mt-0.5 text-xs text-muted-foreground">{item.description}</p>}
-      </div>
+      {item.href ? (
+        <button
+          type="button"
+          onClick={() => {
+            dismiss(item.id);
+            router.push(item.href!);
+          }}
+          className="min-w-0 flex-1 text-left"
+        >
+          <p className="text-sm font-semibold text-foreground">{item.title}</p>
+          {item.description && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>}
+        </button>
+      ) : (
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-foreground">{item.title}</p>
+          {item.description && <p className="mt-0.5 text-xs text-muted-foreground">{item.description}</p>}
+        </div>
+      )}
       <button
         type="button"
         onClick={() => dismiss(item.id)}
