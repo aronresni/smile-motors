@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ROUTES } from "@/lib/constants";
+import { isInviteTokenType } from "@/lib/invitations/invite-link-core";
 
 export interface RedeemInviteState {
   error: string | null;
@@ -24,8 +25,13 @@ export async function redeemInviteAction(
   const tokenHash = String(formData.get("token_hash") ?? "").trim();
   if (!tokenHash) redirect(`${ROUTES.login}?error=invite_invalid`);
 
+  // El respaldo para una cuenta ya confirmada usa un token de recuperación
+  // (ver `invite-link-core.ts`); cualquier otro valor se ignora.
+  const raw = formData.get("type");
+  const type = isInviteTokenType(raw) ? raw : "invite";
+
   const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({ type: "invite", token_hash: tokenHash });
+  const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
   if (error) redirect(`${ROUTES.login}?error=invite_invalid`);
 
   redirect(ROUTES.authAcceptInvite);

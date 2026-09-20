@@ -277,7 +277,7 @@ test.describe("Servicio — correo con el MISMO enlace de la invitación", () =>
     expect(fresh.error).toBeNull();
   });
 
-  test("4b · invitación ya gastada (el enlace se abrió antes): reenviar la revive", async () => {
+  test("4b · invitación ya gastada (el enlace se abrió antes): reenviar la revive", async ({ browser }) => {
     // Estado real de las cuentas que quemó la vista previa de WhatsApp antes
     // de la corrección: cuenta CONFIRMADA por el canje, pero perfil todavía
     // INVITED porque nadie llegó a crear una contraseña.
@@ -292,12 +292,28 @@ test.describe("Servicio — correo con el MISMO enlace de la invitación", () =>
     expect(profile!.account_status).toBe("INVITED");
 
     // Reenviar genera un enlace nuevo que SÍ sirve: el admin no necesita
-    // borrar ni recrear la cuenta.
+    // borrar ni recrear la cuenta. Supabase ya no deja invitar a una cuenta
+    // confirmada, así que el respaldo es un token de recuperación.
     const again = await generateInviteLink(svc, PROD, email);
     if (!again.ok) throw new Error(`generateLink: ${again.code}`);
     expect(again.link.url).not.toBe(first.url);
-    const fresh = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { auth: { persistSession: false } });
-    expect((await fresh.auth.verifyOtp({ type: "invite", token_hash: tokenOf(again.link.url) })).error).toBeNull();
+    expect(new URL(again.link.url).searchParams.get("type")).toBe("recovery");
+
+    // Y de punta a punta: la persona abre ESE enlace y activa su cuenta.
+    const password = `Revive-${stamp}-7x!`;
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await page.goto(again.link.url);
+    await page.getByRole("button", { name: "Continuar" }).click();
+    await page.waitForURL(`${PROD}/auth/accept-invite`, { timeout: 45_000 });
+    await page.getByLabel("Nueva contraseña").fill(password);
+    await page.getByLabel("Confirmar contraseña").fill(password);
+    await page.getByRole("button", { name: "Activar mi cuenta" }).click();
+    await page.waitForURL(`${PROD}/seller`, { timeout: 45_000 });
+    await ctx.close();
+
+    const { data: active } = await svc.from("profiles").select("account_status, is_active").eq("id", first.userId).single();
+    expect(active).toMatchObject({ account_status: "ACTIVE", is_active: true });
   });
 
   test("doble clic / concurrencia: dos envíos simultáneos del mismo enlace → UN solo correo", async () => {

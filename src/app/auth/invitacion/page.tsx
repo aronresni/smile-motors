@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { RedeemInviteForm } from "@/components/auth/redeem-invite-form";
 import { ROUTES } from "@/lib/constants";
+import { isInviteTokenType } from "@/lib/invitations/invite-link-core";
 
 export const metadata: Metadata = {
   title: "Invitación",
@@ -32,10 +33,13 @@ export const dynamic = "force-dynamic";
 export default async function InvitacionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token_hash?: string | string[] }>;
+  searchParams: Promise<{ token_hash?: string | string[]; type?: string | string[] }>;
 }) {
-  const raw = (await searchParams).token_hash;
-  const tokenHash = (Array.isArray(raw) ? raw[0] : raw)?.trim();
+  const params = await searchParams;
+  const rawToken = params.token_hash;
+  const tokenHash = (Array.isArray(rawToken) ? rawToken[0] : rawToken)?.trim();
+  const rawType = Array.isArray(params.type) ? params.type[0] : params.type;
+  const type = isInviteTokenType(rawType) ? rawType : "invite";
 
   if (!tokenHash) redirect(`${ROUTES.login}?error=invite_invalid`);
 
@@ -52,7 +56,7 @@ export default async function InvitacionPage({
           Toca continuar y crea tu contraseña para empezar a usar Smile Motors.
         </p>
       </div>
-      <RedeemInviteForm tokenHash={tokenHash} />
+      <RedeemInviteForm tokenHash={tokenHash} type={type} />
       <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
         El enlace es personal y de un solo uso: se abre cuando lo confirmas tú.
       </p>

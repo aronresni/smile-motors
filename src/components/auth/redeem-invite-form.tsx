@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { redeemInviteAction, type RedeemInviteState } from "@/app/auth/invitacion/actions";
+import type { InviteTokenType } from "@/lib/invitations/invite-link-core";
 import { Button } from "@/components/ui/button";
 
 const initialState: RedeemInviteState = { error: null };
@@ -11,12 +12,19 @@ const initialState: RedeemInviteState = { error: null };
  * abren el enlace para armar una vista previa (WhatsApp, correo) solo hacen
  * GET, así que ya no pueden gastar el token antes que la persona.
  */
-export function RedeemInviteForm({ tokenHash }: { tokenHash: string }) {
+export function RedeemInviteForm({
+  tokenHash,
+  type = "invite",
+}: {
+  tokenHash: string;
+  type?: InviteTokenType;
+}) {
   const [state, formAction, pending] = useActionState(redeemInviteAction, initialState);
 
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="token_hash" value={tokenHash} />
+      <input type="hidden" name="type" value={type} />
       {state.error && (
         <p
           role="alert"
