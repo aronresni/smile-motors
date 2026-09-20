@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  useCallback,
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -9,6 +11,11 @@ import {
 import { cn } from "@/lib/utils";
 import { emptyDocument, type DocumentUploadState } from "@/lib/sales/types";
 import { ImageEditorModal } from "@/components/seller/ventas/image-editor-modal";
+import {
+  prepareImageErrorMessage,
+  prepareImageFile,
+  type PreparedImage,
+} from "@/lib/sales/prepare-image-file";
 
 interface DocumentUploaderProps {
   label: string;
@@ -20,23 +27,11 @@ interface DocumentUploaderProps {
   error?: string;
 }
 
-/** Las fotos de la galería suelen pesar más que una captura directa de la
- * cámara (12–64 MP); se leen solo en el dispositivo y el recorte guardado se
- * limita de resolución (ver `crop-image.ts`), así que el tope es holgado. */
-const MAX_MB = 30;
-
 type PickSource = "gallery" | "camera";
 
-/** Comprueba que el navegador pueda decodificar la imagen (p. ej. HEIC no se
- * abre en Chrome/Android) antes de abrir el editor. */
-function canDecode(src: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img.naturalWidth > 0 && img.naturalHeight > 0);
-    img.onerror = () => resolve(false);
-    img.src = src;
-  });
-}
+const revoke = (url: string | null) => {
+  if (url) URL.revokeObjectURL(url);
+};
 
 export function DocumentUploader({
   label,
@@ -48,45 +43,86 @@ export function DocumentUploader({
 }: DocumentUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [pendingSrc, setPendingSrc] = useState<string | null>(null);
+  const [pending, setPending] = useState<{
+    src: string;
+    size: { width: number; height: number } | null;
+  } | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  const readFile = (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      onChange({ ...value, status: "error", error: "Selecciona un archivo de imagen." });
-      return;
-    }
-    if (file.size > MAX_MB * 1024 * 1024) {
-      onChange({ ...value, status: "error", error: `La imagen supera ${MAX_MB} MB.` });
-      return;
-    }
-    onChange({ ...value, status: "uploading", error: null, fileName: file.name });
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const src = String(reader.result);
-      if (!(await canDecode(src))) {
+  // El preparado de la imagen es asíncrono y puede tardar varios segundos en
+  // un móvil: cuando termina, `value` ya no es el que se capturó al empezar.
+  const valueRef = useRef(value);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  // Solo cuenta la última foto elegida: si el vendedor elige otra mientras la
+  // anterior se procesa, el resultado viejo se descarta (y se libera).
+  const attemptRef = useRef(0);
+  // Imagen de trabajo GUARDADA: la que abre "Reajustar". Se libera solo
+  // cuando otra ocupa su lugar (al guardar el recorte) o al quitar la foto.
+  const savedUrlRef = useRef<string | null>(null);
+  // Imagen de trabajo PENDIENTE: recién elegida, aún sin confirmar el
+  // recorte. Si el vendedor cancela, se libera y vuelve la anterior.
+  const pendingUrlRef = useRef<string | null>(null);
+  const restoreOriginalRef = useRef<string | null>(null);
+
+  // Al desmontar, libera lo que el estado guardado ya no referencie (una
+  // venta a medio llenar conserva su "Reajustar").
+  useEffect(
+    () => () => {
+      revoke(pendingUrlRef.current);
+      const url = savedUrlRef.current;
+      const current = valueRef.current;
+      if (url && current.originalDataUrl !== url && current.dataUrl !== url) revoke(url);
+    },
+    [],
+  );
+
+  const handleFile = useCallback(
+    async (file: File) => {
+      const attempt = ++attemptRef.current;
+      const base = valueRef.current;
+      onChange({ ...base, status: "uploading", error: null, fileName: file.name });
+
+      let prepared: PreparedImage | null = null;
+      try {
+        prepared = await prepareImageFile(file);
+      } catch (err) {
+        if (attempt !== attemptRef.current) return;
         onChange({
-          ...value,
+          ...valueRef.current,
           status: "error",
-          error:
-            "No pudimos abrir esta imagen (formato no compatible, p. ej. HEIC). Elige una foto JPG o PNG.",
+          fileName: file.name,
+          error: prepareImageErrorMessage(err),
         });
         return;
       }
-      setPendingSrc(src);
+
+      // Llegó tarde (el vendedor ya eligió otra foto): descartar.
+      if (attempt !== attemptRef.current) {
+        revoke(prepared.url);
+        return;
+      }
+
+      // Si ya había una elección sin confirmar, la que se restaura al
+      // cancelar sigue siendo la ANTERIOR a todas ellas (esa sí sigue viva).
+      const hadPending = Boolean(pendingUrlRef.current);
+      revoke(pendingUrlRef.current);
+      pendingUrlRef.current = prepared.url;
+      if (!hadPending) restoreOriginalRef.current = valueRef.current.originalDataUrl;
+      setPending({ src: prepared.url, size: { width: prepared.width, height: prepared.height } });
       setEditorOpen(true);
       onChange({
-        ...value,
+        ...valueRef.current,
         status: "editing",
         error: null,
         fileName: file.name,
-        originalDataUrl: src,
+        originalDataUrl: prepared.url,
       });
-    };
-    reader.onerror = () =>
-      onChange({ ...value, status: "error", error: "No se pudo leer el archivo." });
-    reader.readAsDataURL(file);
-  };
+    },
+    [onChange],
+  );
 
   /** Galería por defecto; la cámara solo si el vendedor la pide. El atributo
    * `capture` se fija justo antes de abrir el selector: con él, el móvil abre
@@ -96,29 +132,52 @@ export function DocumentUploader({
     if (!input) return;
     if (source === "camera") input.setAttribute("capture", "environment");
     else input.removeAttribute("capture");
+    // Se limpia ANTES de abrir el selector (no después de elegir): así volver
+    // a elegir la misma foto dispara `change` igual, y en iOS nunca se toca
+    // el input mientras su archivo se está leyendo.
+    input.value = "";
     input.click();
   };
 
   const handleSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) readFile(file);
-    e.target.value = "";
+    // Cancelar el selector NO dispara `change` (para eso está el evento
+    // `cancel`): si llega aquí sin archivo, o con uno vacío, es que el
+    // teléfono no pudo entregar la foto — típico de una foto de iCloud que
+    // todavía no está descargada. Sin aviso, la foto "desaparecía" sin más.
+    if (!file || file.size === 0) {
+      onChange({
+        ...valueRef.current,
+        status: "error",
+        error:
+          "No recibimos la foto. Si está guardada en iCloud, ábrela primero en Fotos para que se descargue en el teléfono y vuelve a intentarlo.",
+      });
+      return;
+    }
+    void handleFile(file);
   };
 
   const handleDrop = (e: DragEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setDragOver(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) readFile(file);
+    if (file) void handleFile(file);
   };
 
   const handleEditorSave = (dataUrl: string) => {
     setEditorOpen(false);
+    const current = valueRef.current;
+    if (pendingUrlRef.current) {
+      // La nueva foto ocupa el lugar de la anterior: ahora sí se libera.
+      revoke(savedUrlRef.current);
+      savedUrlRef.current = pendingUrlRef.current;
+      pendingUrlRef.current = null;
+    }
     onChange({
       status: "ready",
       dataUrl,
-      fileName: value.fileName,
-      originalDataUrl: value.originalDataUrl ?? pendingSrc,
+      fileName: current.fileName,
+      originalDataUrl: savedUrlRef.current ?? current.originalDataUrl ?? pending?.src ?? null,
       error: null,
     });
     onImageSaved?.(dataUrl);
@@ -126,16 +185,39 @@ export function DocumentUploader({
 
   const handleEditorCancel = () => {
     setEditorOpen(false);
-    if (value.dataUrl) {
-      onChange({ ...value, status: "ready" });
+    const current = valueRef.current;
+    // Cancelar una foto nueva no debe perder la que ya estaba guardada.
+    const hadPending = Boolean(pendingUrlRef.current);
+    revoke(pendingUrlRef.current);
+    pendingUrlRef.current = null;
+    setPending(null);
+    if (current.dataUrl) {
+      onChange({
+        ...current,
+        status: "ready",
+        originalDataUrl: hadPending ? restoreOriginalRef.current : current.originalDataUrl,
+      });
     } else {
       onChange(emptyDocument());
     }
   };
 
   const reEdit = () => {
-    setPendingSrc(value.originalDataUrl ?? value.dataUrl);
+    const src = value.originalDataUrl ?? value.dataUrl;
+    if (!src) return;
+    restoreOriginalRef.current = value.originalDataUrl;
+    setPending({ src, size: null });
     setEditorOpen(true);
+  };
+
+  const remove = () => {
+    attemptRef.current++; // cancela un preparado en curso
+    revoke(pendingUrlRef.current);
+    revoke(savedUrlRef.current);
+    pendingUrlRef.current = null;
+    savedUrlRef.current = null;
+    setPending(null);
+    onChange(emptyDocument());
   };
 
   const busy = value.status === "uploading" || value.status === "editing";
@@ -180,7 +262,7 @@ export function DocumentUploader({
             </button>
             <button
               type="button"
-              onClick={() => onChange(emptyDocument())}
+              onClick={remove}
               className="font-medium text-danger hover:opacity-80"
             >
               Quitar
@@ -263,19 +345,28 @@ export function DocumentUploader({
         </div>
       )}
 
-      {shownError && <p className="text-[11px] text-danger">{shownError}</p>}
+      {shownError && (
+        <p role="status" className="text-[11px] text-danger">
+          {shownError}
+        </p>
+      )}
 
+      {/* Visible para el navegador (no `display:none`): iOS abre el selector
+       * de fotos de forma más fiable cuando el input está renderizado. */}
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
         onChange={handleSelect}
-        className="hidden"
+        tabIndex={-1}
+        aria-hidden="true"
+        className="sr-only"
       />
 
       <ImageEditorModal
         open={editorOpen}
-        src={pendingSrc}
+        src={pending?.src ?? null}
+        srcSize={pending?.size ?? null}
         onCancel={handleEditorCancel}
         onSave={handleEditorSave}
       />

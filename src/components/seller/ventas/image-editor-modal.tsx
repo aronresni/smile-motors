@@ -9,6 +9,10 @@ import { getCroppedImage } from "@/lib/sales/crop-image";
 interface ImageEditorModalProps {
   open: boolean;
   src: string | null;
+  /** Tamaño real de `src`, si ya se conoce (lo devuelve `prepareImageFile`):
+   * evita una decodificación extra y, sobre todo, que el primer recorte se
+   * calcule con el aspecto de la imagen ANTERIOR. */
+  srcSize?: { width: number; height: number } | null;
   onCancel: () => void;
   onSave: (dataUrl: string) => void;
 }
@@ -38,6 +42,7 @@ const CARD_ASPECT = 1013 / 638;
 export function ImageEditorModal({
   open,
   src,
+  srcSize = null,
   onCancel,
   onSave,
 }: ImageEditorModalProps) {
@@ -47,27 +52,52 @@ export function ImageEditorModal({
   const [areaPixels, setAreaPixels] = useState<Area | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
-  const [aspect, setAspect] = useState<number>(CARD_ASPECT);
+  const [decodedSize, setDecodedSize] = useState<{ width: number; height: number } | null>(null);
+  /** Aspecto elegido a mano ("Recortar a forma de tarjeta"); si es `null`
+   * manda el de la propia foto. */
+  const [aspectOverride, setAspectOverride] = useState<number | null>(null);
+  const [shownSrc, setShownSrc] = useState<string | null>(src);
 
-  // Al cargar cada imagen: el aspecto inicial del recorte pasa a ser el de
-  // la PROPIA foto, para que a zoom=1 se vea el 100% de la imagen (nunca se
-  // pierde contenido por defecto). El vendedor puede acercar si quiere
-  // recortar más ajustado a la tarjeta.
+  // Imagen nueva → el encuadre empieza de cero (ajuste de estado durante el
+  // render, no en un efecto: así no hay un primer render con el recorte de
+  // la foto anterior).
+  if (src !== shownSrc) {
+    setShownSrc(src);
+    setDecodedSize(null);
+    setAspectOverride(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setRotation(0);
+    setAreaPixels(null);
+    setError(null);
+  }
+
+  const naturalSize = srcSize ?? decodedSize;
+  // El aspecto inicial del recorte es el de la PROPIA foto, para que a
+  // zoom=1 se vea el 100% de la imagen (nunca se pierde contenido por
+  // defecto). El vendedor puede acercar si quiere recortar más ajustado.
+  const aspect = aspectOverride ?? (naturalSize
+    ? naturalSize.width / naturalSize.height || CARD_ASPECT
+    : CARD_ASPECT);
+
+  // Solo hace falta decodificar cuando el tamaño no viene dado — p. ej.
+  // "Reajustar" sobre un borrador ya guardado.
   useEffect(() => {
-    if (!open || !src) return;
+    if (!open || !src || srcSize) return;
     let cancelled = false;
     const img = new Image();
     img.onload = () => {
       if (cancelled) return;
-      setNaturalSize({ width: img.naturalWidth, height: img.naturalHeight });
-      setAspect(img.naturalWidth / img.naturalHeight || CARD_ASPECT);
+      setDecodedSize({ width: img.naturalWidth, height: img.naturalHeight });
     };
+    // Esa "Reajustar" usa la URL firmada de Supabase: sin CORS el lienzo
+    // quedaría contaminado al recortar.
+    if (/^https?:/i.test(src)) img.crossOrigin = "anonymous";
     img.src = src;
     return () => {
       cancelled = true;
     };
-  }, [open, src]);
+  }, [open, src, srcSize]);
 
   const onCropComplete = useCallback((_area: Area, pixels: Area) => {
     setAreaPixels(pixels);
@@ -78,7 +108,7 @@ export function ImageEditorModal({
     setZoom(1);
     setRotation(0);
     setError(null);
-    if (naturalSize) setAspect(naturalSize.width / naturalSize.height || CARD_ASPECT);
+    setAspectOverride(null);
   };
 
   const handleCancel = () => {
@@ -214,7 +244,7 @@ export function ImageEditorModal({
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => setAspect(CARD_ASPECT)}
+            onClick={() => setAspectOverride(CARD_ASPECT)}
           >
             Recortar a forma de tarjeta
           </Button>

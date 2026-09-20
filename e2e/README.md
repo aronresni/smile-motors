@@ -59,6 +59,15 @@ scripts de servicio (sin sesión) nunca notifican.
   Form** —tanto del comprador como del destinatario en Cuba— se
   autocompletan de verdad, y que `deliveryAddress`/`municipality` NUNCA se
   tocan desde el documento.
+- **`gallery-photo-upload.spec.ts`** — regresión del fallo de iPhone/Safari
+  al subir fotos desde la GALERÍA (la imagen "desaparecía" al dar *Done* y el
+  editor de recorte no se abría): una foto de 17 MP abre el editor y se
+  guarda reducida al tope de la imagen de trabajo (2600 px de lado mayor) sin
+  quedarse en "Procesando imagen…"; el recorte conserva la foto y la rotación
+  (se comprueban los colores de los cuatro cuadrantes, también tras rotar
+  90°); una foto sin tipo MIME (iCloud / Archivos) se acepta igual; y cuando
+  el archivo no se puede abrir o el teléfono no llega a entregarlo, el
+  vendedor ve un mensaje accionable —no un cuelgue— y puede reintentar.
 - **`seller-management.spec.ts`** — invitación/activación/suspensión de
   vendedores, contra el shell real de `/admin`: el modal "Invitar vendedor"
   (con su validación), la navegación "Vendedores" del shell de admin, y el
