@@ -280,6 +280,106 @@ export type Database = {
           },
         ]
       }
+      notification_delivery_errors: {
+        Row: {
+          context: Json | null
+          created_at: string
+          id: string
+          message: string | null
+          source: string
+          sqlstate: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          source: string
+          sqlstate?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          source?: string
+          sqlstate?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          destination_url: string | null
+          entity_id: string | null
+          entity_type: string | null
+          event_key: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          read_at: string | null
+          recipient_user_id: string
+          sale_id: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          destination_url?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_key?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          read_at?: string | null
+          recipient_user_id: string
+          sale_id?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          destination_url?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_key?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read_at?: string | null
+          recipient_user_id?: string
+          sale_id?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_method_plans: {
         Row: {
           created_at: string
@@ -685,6 +785,7 @@ export type Database = {
           invited_at: string | null
           invited_by: string | null
           is_active: boolean
+          is_sandbox: boolean
           phone: string | null
           reactivated_at: string | null
           reactivated_by: string | null
@@ -703,6 +804,7 @@ export type Database = {
           invited_at?: string | null
           invited_by?: string | null
           is_active?: boolean
+          is_sandbox?: boolean
           phone?: string | null
           reactivated_at?: string | null
           reactivated_by?: string | null
@@ -721,6 +823,7 @@ export type Database = {
           invited_at?: string | null
           invited_by?: string | null
           is_active?: boolean
+          is_sandbox?: boolean
           phone?: string | null
           reactivated_at?: string | null
           reactivated_by?: string | null
@@ -1912,10 +2015,16 @@ export type Database = {
           cancelled_at: string | null
           created_at: string
           email: string
+          email_attempts: number
+          email_delivery_status: string | null
+          email_last_attempt_at: string | null
+          email_last_error: string | null
+          email_sent_at: string | null
           id: string
           invited_at: string
           invited_by: string
           invited_user_id: string | null
+          link_digest: string | null
           status: string
         }
         Insert: {
@@ -1923,10 +2032,16 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           email: string
+          email_attempts?: number
+          email_delivery_status?: string | null
+          email_last_attempt_at?: string | null
+          email_last_error?: string | null
+          email_sent_at?: string | null
           id?: string
           invited_at?: string
           invited_by: string
           invited_user_id?: string | null
+          link_digest?: string | null
           status?: string
         }
         Update: {
@@ -1934,10 +2049,16 @@ export type Database = {
           cancelled_at?: string | null
           created_at?: string
           email?: string
+          email_attempts?: number
+          email_delivery_status?: string | null
+          email_last_attempt_at?: string | null
+          email_last_error?: string | null
+          email_sent_at?: string | null
           id?: string
           invited_at?: string
           invited_by?: string
           invited_user_id?: string | null
+          link_digest?: string | null
           status?: string
         }
         Relationships: [
@@ -2169,7 +2290,55 @@ export type Database = {
         Returns: string
       }
       _liquidation_week_start: { Args: { p_date: string }; Returns: string }
+      _log_notification_error: {
+        Args: {
+          p_context: Json
+          p_message: string
+          p_source: string
+          p_sqlstate: string
+        }
+        Returns: undefined
+      }
       _logistics_status_label: { Args: { p_status: string }; Returns: string }
+      _notification_money: { Args: { p_cents: number }; Returns: string }
+      _notification_person: { Args: { p_profile_id: string }; Returns: string }
+      _notification_sale_context: {
+        Args: { p_sale_id: string }
+        Returns: Record<string, unknown>
+      }
+      _notifications_enabled: { Args: { p_event_at: string }; Returns: boolean }
+      _notify: {
+        Args: {
+          p_actor: string
+          p_entity_id: string
+          p_entity_type: string
+          p_event_key: string
+          p_message: string
+          p_metadata?: Json
+          p_recipient: string
+          p_sale_id: string
+          p_title: string
+          p_type: string
+          p_url: string
+        }
+        Returns: undefined
+      }
+      _notify_admins: {
+        Args: {
+          p_actor: string
+          p_entity_id: string
+          p_entity_type: string
+          p_event_key: string
+          p_message: string
+          p_metadata?: Json
+          p_sale_id: string
+          p_subject: string
+          p_title: string
+          p_type: string
+          p_url: string
+        }
+        Returns: undefined
+      }
       _pay_net_from_gross: {
         Args: {
           p_ca_bps: number
@@ -2247,6 +2416,10 @@ export type Database = {
       }
       admin_assign_inventory_vin: {
         Args: { p_inventory_unit_id: string; p_sale_unit_id: string }
+        Returns: Json
+      }
+      admin_begin_invitation_email: {
+        Args: { p_link_digest: string; p_seller_id: string }
         Returns: Json
       }
       admin_bulk_create_inventory_units: {
@@ -2384,6 +2557,15 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_finish_invitation_email: {
+        Args: {
+          p_error?: string
+          p_link_digest: string
+          p_seller_id: string
+          p_sent: boolean
+        }
+        Returns: Json
+      }
       admin_global_search: {
         Args: { p_limit?: number; p_query: string }
         Returns: Json
@@ -2491,7 +2673,7 @@ export type Database = {
         Returns: Json
       }
       admin_record_seller_invitation: {
-        Args: { p_email: string; p_seller_id: string }
+        Args: { p_email: string; p_link_digest?: string; p_seller_id: string }
         Returns: Json
       }
       admin_release_inventory_vin: {
@@ -2633,7 +2815,7 @@ export type Database = {
         Returns: Json
       }
       admin_touch_seller_invitation: {
-        Args: { p_seller_id: string }
+        Args: { p_link_digest?: string; p_seller_id: string }
         Returns: Json
       }
       admin_update_cuba_sale: {
@@ -2790,6 +2972,12 @@ export type Database = {
         Returns: Json
       }
       mark_sale_sold: { Args: { p_sale_id: string }; Returns: Json }
+      notification_mark_all_read: { Args: never; Returns: Json }
+      notification_mark_read: {
+        Args: { p_notification_id: string }
+        Returns: Json
+      }
+      notification_unread_count: { Args: never; Returns: number }
       payment_bps_fee: {
         Args: { p_amount: number; p_bps: number }
         Returns: number

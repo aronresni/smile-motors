@@ -13,6 +13,9 @@ const MESSAGES: Record<string, string> = {
   INVITE_FAILED: "No se pudo generar el enlace de invitación. Intenta de nuevo.",
   RECORD_FAILED:
     "La cuenta se creó, pero no se pudo registrar la invitación. Contacta soporte técnico.",
+  STALE_LINK:
+    "Ese enlace ya no es el vigente. Usa “Reenviar invitación” para generar uno nuevo.",
+  EMAIL_COOLDOWN: "El correo ya se envió o se está enviando. Espera unos segundos.",
   UNEXPECTED: "No se pudo completar la acción. Intenta de nuevo.",
 };
 

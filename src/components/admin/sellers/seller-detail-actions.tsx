@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -14,7 +14,7 @@ import {
   resendSellerInvitation,
   suspendSeller,
 } from "@/app/(admin)/admin/vendedores/actions";
-import { InviteLinkBox } from "@/components/admin/sellers/invite-link-box";
+import { InviteLinkBox, type InviteEmailStatus } from "@/components/admin/sellers/invite-link-box";
 import { toast } from "@/components/ui/toast";
 
 /** Acciones administrativas de la ficha de un vendedor — una por estado,
@@ -24,36 +24,57 @@ export function SellerDetailActions({
   sellerId,
   accountStatus,
   phone,
+  firstName,
 }: {
   sellerId: string;
   accountStatus: SellerAccountStatus;
   /** Para el atajo de WhatsApp al reenviar la invitación. */
   phone?: string | null;
+  /** Nombre de pila, para el mensaje de WhatsApp. */
+  firstName?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  // Corta el segundo clic de un doble clic antes del re-render (p. ej. dos
+  // "Reenviar invitación" rotarían el enlace dos veces).
+  const inFlight = useRef(false);
   const [error, setError] = useState<string | null>(null);
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [invite, setInvite] = useState<{
+    url: string;
+    emailStatus?: InviteEmailStatus;
+    emailCode?: string;
+  } | null>(null);
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [disableOpen, setDisableOpen] = useState(false);
   const [reason, setReason] = useState("");
 
   const run = async (
-    fn: () => Promise<{ ok: boolean; code?: string; inviteUrl?: unknown }>,
+    fn: () => Promise<{ ok: boolean; code?: string; inviteUrl?: unknown; emailStatus?: unknown; emailCode?: unknown }>,
     onDone?: () => void,
     success?: string,
   ) => {
-    if (busy) return;
+    if (busy || inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
-    const res = await fn();
+    const res = await fn().finally(() => {
+      inFlight.current = false;
+    });
     if (!res.ok) {
       setError(sellerActionErrorText(res.code));
       setBusy(false);
       return;
     }
     setBusy(false);
-    setInviteUrl(typeof res.inviteUrl === "string" ? res.inviteUrl : null);
+    setInvite(
+      typeof res.inviteUrl === "string"
+        ? {
+            url: res.inviteUrl,
+            emailStatus: res.emailStatus as InviteEmailStatus | undefined,
+            emailCode: res.emailCode as string | undefined,
+          }
+        : null,
+    );
     onDone?.();
     if (success) toast.success(success);
     router.refresh();
@@ -106,10 +127,15 @@ export function SellerDetailActions({
         )}
       </div>
 
-      {inviteUrl && (
+      {invite && (
         <InviteLinkBox
-          url={inviteUrl}
+          key={invite.url}
+          url={invite.url}
+          sellerId={sellerId}
+          firstName={firstName ?? ""}
           phone={phone ?? undefined}
+          emailStatus={invite.emailStatus}
+          emailCode={invite.emailCode}
           className="rounded-xl border border-border bg-surface p-3"
         />
       )}

@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createInviteLink } from "@/lib/auth/invite-link";
+import { createInviteLink, digestOfInviteUrl, siteUrl } from "@/lib/auth/invite-link";
+import { getInvitationMailer } from "@/lib/email/resend-mailer";
+import {
+  deliverInvitationEmail,
+  type EmailDeliveryResult,
+} from "@/lib/invitations/deliver-invitation-email";
 import { requireZone } from "@/lib/auth/session";
 import { ROUTES } from "@/lib/constants";
 
@@ -20,9 +25,12 @@ import { ROUTES } from "@/lib/constants";
  *    ANTES de tocar ese cliente, se exige la zona admin con el cliente
  *    normal (RLS) — la clave de servicio nunca decide sola quién es admin.
  *
- * El enlace se DEVUELVE al administrador para que se lo pase al vendedor; no
- * se envía por el correo de Supabase (servicio de pruebas, limitado a unos
- * pocos envíos por hora) ni se guarda en la base.
+ * El enlace se DEVUELVE al administrador (Copiar / WhatsApp) y, ADEMÁS, se
+ * intenta enviar por correo con Resend — siempre el MISMO enlace, sin un
+ * segundo token (ver `lib/invitations/deliver-invitation-email.ts`). Si el
+ * correo falla, la invitación queda intacta: nunca se deshace por eso. El
+ * enlace no se guarda en la base (solo su resumen SHA-256) ni se envía por el
+ * correo de Supabase (servicio de pruebas, limitado a unos pocos por hora).
  */
 
 export interface RpcResult {
@@ -34,6 +42,27 @@ export interface RpcResult {
 function revalidateSellers(sellerId?: string) {
   revalidatePath(ROUTES.adminVendedores);
   if (sellerId) revalidatePath(`${ROUTES.adminVendedores}/${sellerId}`);
+}
+
+/** Resultado del correo que ve el admin (la invitación ya existe). */
+export interface InvitationEmailOutcome {
+  emailStatus: EmailDeliveryResult["status"];
+  emailCode?: string;
+}
+
+async function sendInvitationEmail(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  sellerId: string,
+  inviteUrl: string,
+  linkDigest: string,
+): Promise<InvitationEmailOutcome> {
+  const result = await deliverInvitationEmail(supabase, getInvitationMailer(), {
+    sellerId,
+    inviteUrl,
+    linkDigest,
+    siteUrl: siteUrl(),
+  });
+  return { emailStatus: result.status, emailCode: result.code };
 }
 
 export interface InviteSellerInput {
@@ -68,12 +97,18 @@ export async function inviteSeller(input: InviteSellerInput): Promise<RpcResult>
   const { data, error } = await supabase.rpc("admin_record_seller_invitation", {
     p_seller_id: invite.link.userId,
     p_email: email,
+    p_link_digest: invite.link.digest,
   });
   if (error || !data) return { ok: false, code: "RECORD_FAILED" };
+  const recorded = data as RpcResult;
+  if (!recorded.ok) return recorded;
+
+  // Canal adicional: su resultado nunca deshace la invitación ya registrada.
+  const delivery = await sendInvitationEmail(supabase, invite.link.userId, invite.link.url, invite.link.digest);
 
   revalidateSellers();
   void ctx; // ya validado arriba; se mantiene por claridad del flujo
-  return { ...(data as RpcResult), inviteUrl: invite.link.url };
+  return { ...recorded, sellerId: invite.link.userId, inviteUrl: invite.link.url, ...delivery };
 }
 
 /** REENVIAR INVITACIÓN — reutiliza el MISMO usuario/perfil, nunca crea uno nuevo. */
@@ -93,11 +128,42 @@ export async function resendSellerInvitation(sellerId: string): Promise<RpcResul
   const invite = await createInviteLink(profile.email);
   if (!invite.ok) return { ok: false, code: invite.code };
 
-  const { data, error } = await supabase.rpc("admin_touch_seller_invitation", { p_seller_id: sellerId });
+  const { data, error } = await supabase.rpc("admin_touch_seller_invitation", {
+    p_seller_id: sellerId,
+    p_link_digest: invite.link.digest,
+  });
   if (error || !data) return { ok: false, code: "RECORD_FAILED" };
+  const touched = data as RpcResult;
+  if (!touched.ok) return touched;
+
+  // El correo lleva el enlace NUEVO; el anterior ya quedó invalidado.
+  const delivery = await sendInvitationEmail(supabase, sellerId, invite.link.url, invite.link.digest);
 
   revalidateSellers(sellerId);
-  return { ...(data as RpcResult), inviteUrl: invite.link.url };
+  return { ...touched, sellerId, inviteUrl: invite.link.url, ...delivery };
+}
+
+/**
+ * REINTENTAR / REENVIAR CORREO — vuelve a enviar por correo el enlace que el
+ * admin tiene en pantalla, SIN generar otro token. El servidor comprueba que
+ * ese enlace sea de esta app y el VIGENTE de ese vendedor (resumen SHA-256):
+ * nunca se envía un enlace ya invalidado ni una URL arbitraria. El
+ * destinatario sale de la base, no del navegador. Si el enlace dejó de ser
+ * el vigente, el admin debe usar "Reenviar invitación" (genera uno nuevo).
+ */
+export async function retrySellerInvitationEmail(
+  sellerId: string,
+  inviteUrl: string,
+): Promise<RpcResult> {
+  await requireZone("admin");
+
+  const digest = digestOfInviteUrl(inviteUrl);
+  if (!digest) return { ok: false, code: "STALE_LINK" };
+
+  const supabase = await createClient();
+  const delivery = await sendInvitationEmail(supabase, sellerId, inviteUrl, digest);
+  revalidateSellers(sellerId);
+  return { ok: true, sellerId, inviteUrl, ...delivery };
 }
 
 export async function cancelSellerInvitation(sellerId: string): Promise<RpcResult> {

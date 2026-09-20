@@ -107,6 +107,11 @@ export interface AdminSellerInvitation {
   status: "PENDING" | "ACCEPTED" | "EXPIRED" | "CANCELLED";
   invitedAt: string;
   acceptedAt: string | null;
+  /** Correo de invitación (Resend). No es el estado de la cuenta. */
+  emailDeliveryStatus?: "PENDING" | "SENT" | "FAILED" | null;
+  emailSentAt?: string | null;
+  emailLastError?: string | null;
+  emailAttempts?: number;
 }
 export interface AdminSellerCommercialSummary {
   pendingCount: number;
@@ -143,9 +148,28 @@ export async function getAdminSellerDetail(sellerId: string): Promise<AdminSelle
   if (error || !data) return null;
   const res = data as unknown as { ok: boolean } & Partial<AdminSellerDetail>;
   if (!res.ok || !res.profile) return null;
+
+  // Entrega del correo de la invitación vigente (RLS: solo admin lee
+  // seller_invitations). Nunca se lee ni se expone el resumen del enlace.
+  let invitation = res.invitation ?? null;
+  if (invitation) {
+    const { data: delivery } = await supabase
+      .from("seller_invitations")
+      .select("email_delivery_status, email_sent_at, email_last_error, email_attempts")
+      .eq("id", invitation.id)
+      .maybeSingle();
+    invitation = {
+      ...invitation,
+      emailDeliveryStatus: (delivery?.email_delivery_status as AdminSellerInvitation["emailDeliveryStatus"]) ?? null,
+      emailSentAt: delivery?.email_sent_at ?? null,
+      emailLastError: delivery?.email_last_error ?? null,
+      emailAttempts: delivery?.email_attempts ?? 0,
+    };
+  }
+
   return {
     profile: res.profile,
-    invitation: res.invitation ?? null,
+    invitation,
     commercial: res.commercial ?? { pendingCount: 0, soldCount: 0, paidCount: 0, unitsSold: 0, revenueCents: 0 },
     recentSales: res.recentSales ?? [],
     recentEvents: res.recentEvents ?? [],

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { TextField } from "@/components/ui/form-fields";
 import { sellerActionErrorText } from "@/lib/admin/seller-errors";
 import { inviteSeller } from "@/app/(admin)/admin/vendedores/actions";
-import { InviteLinkBox } from "@/components/admin/sellers/invite-link-box";
+import { InviteLinkBox, type InviteEmailStatus } from "@/components/admin/sellers/invite-link-box";
 import { toast } from "@/components/ui/toast";
 
 const EMPTY = { firstName: "", lastName: "", email: "", phone: "" };
@@ -20,23 +20,32 @@ export function InviteSellerModal({ defaultOpen = false }: { defaultOpen?: boole
   const [open, setOpen] = useState(defaultOpen);
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
   const [error, setError] = useState<string | null>(null);
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [invite, setInvite] = useState<{
+    url: string;
+    sellerId: string;
+    emailStatus?: InviteEmailStatus;
+    emailCode?: string;
+  } | null>(null);
 
   const close = () => {
     if (busy) return;
     setOpen(false);
     setForm(EMPTY);
     setError(null);
-    setInviteUrl(null);
+    setInvite(null);
   };
 
   const submit = async () => {
-    if (busy) return;
+    // Un clic = una invitación: el ref corta el segundo clic de un doble clic
+    // antes de que el botón se deshabilite (cada envío generaría otro enlace).
+    if (busy || inFlight.current) return;
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
       setError("Completa nombre, apellido y correo.");
       return;
     }
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     const res = await inviteSeller({
@@ -44,6 +53,8 @@ export function InviteSellerModal({ defaultOpen = false }: { defaultOpen?: boole
       lastName: form.lastName,
       email: form.email,
       phone: form.phone || undefined,
+    }).finally(() => {
+      inFlight.current = false;
     });
     if (!res.ok) {
       setError(sellerActionErrorText(res.code));
@@ -51,8 +62,14 @@ export function InviteSellerModal({ defaultOpen = false }: { defaultOpen?: boole
       return;
     }
     setBusy(false);
-    setInviteUrl(String(res.inviteUrl ?? ""));
-    toast.success("Invitación creada.");
+    const emailStatus = res.emailStatus as InviteEmailStatus | undefined;
+    setInvite({
+      url: String(res.inviteUrl ?? ""),
+      sellerId: String(res.sellerId ?? ""),
+      emailStatus,
+      emailCode: res.emailCode as string | undefined,
+    });
+    toast.success(emailStatus === "SENT" ? "Invitación enviada por correo." : "Invitación creada.");
     router.refresh();
   };
 
@@ -66,9 +83,9 @@ export function InviteSellerModal({ defaultOpen = false }: { defaultOpen?: boole
         open={open}
         onClose={close}
         title="Invitar vendedor"
-        description="Se crea la cuenta y se genera un enlace seguro para que el vendedor ponga su propia contraseña. Nunca se le asigna una contraseña desde aquí."
+        description="Se crea la cuenta, se genera un enlace seguro para que el vendedor ponga su propia contraseña y se le envía por correo. Nunca se le asigna una contraseña desde aquí."
         footer={
-          inviteUrl ? (
+          invite ? (
             <Button variant="primary" size="sm" onClick={close}>
               Cerrar
             </Button>
@@ -84,14 +101,20 @@ export function InviteSellerModal({ defaultOpen = false }: { defaultOpen?: boole
           )
         }
       >
-        {inviteUrl ? (
+        {invite ? (
           <div className="space-y-3">
-            <p className="rounded-lg bg-success/10 px-3 py-2 text-sm text-success">
-              Cuenta creada. Pásale este enlace al vendedor: al abrirlo crea su
-              contraseña y ya entra con su correo. Figura como &quot;Invitado&quot;
-              hasta que lo haga.
+            <InviteLinkBox
+              url={invite.url}
+              sellerId={invite.sellerId}
+              firstName={form.firstName}
+              phone={form.phone}
+              emailStatus={invite.emailStatus}
+              emailCode={invite.emailCode}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Al abrir el enlace, el vendedor crea su contraseña y ya entra con
+              su correo. Figura como &quot;Invitado&quot; hasta que lo haga.
             </p>
-            <InviteLinkBox url={inviteUrl} phone={form.phone} />
           </div>
         ) : (
           <div className="space-y-3">

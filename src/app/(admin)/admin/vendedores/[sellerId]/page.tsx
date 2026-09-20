@@ -5,6 +5,7 @@ import { getAdminSellerDetail } from "@/lib/admin/sellers";
 import { formatCents } from "@/lib/money";
 import { ROUTES } from "@/lib/constants";
 import { SellerDetailActions } from "@/components/admin/sellers/seller-detail-actions";
+import { firstNameOf } from "@/lib/invitations/invitation-email";
 
 export const metadata: Metadata = { title: "Vendedor · Admin" };
 export const dynamic = "force-dynamic";
@@ -23,7 +24,31 @@ const EVENT_LABEL: Record<string, string> = {
   SELLER_SUSPENDED: "Cuenta suspendida",
   SELLER_REACTIVATED: "Cuenta reactivada",
   SELLER_DISABLED: "Cuenta deshabilitada",
+  INVITATION_EMAIL_SENT: "Invitación enviada por correo",
+  INVITATION_EMAIL_FAILED: "No se pudo enviar el correo de invitación",
 };
+
+/** Estado del correo de la invitación pendiente (NO es el estado de la cuenta). */
+function invitationEmailText(invitation: {
+  status: string;
+  emailDeliveryStatus?: "PENDING" | "SENT" | "FAILED" | null;
+  emailSentAt?: string | null;
+  emailLastError?: string | null;
+} | null): string | null {
+  if (!invitation || invitation.status !== "PENDING") return null;
+  switch (invitation.emailDeliveryStatus) {
+    case "SENT":
+      return `Enviado · ${formatDateTime(invitation.emailSentAt ?? null)}`;
+    case "FAILED":
+      return invitation.emailLastError === "NOT_CONFIGURED"
+        ? "No enviado (el correo no está configurado)"
+        : "No se pudo enviar";
+    case "PENDING":
+      return "Enviando…";
+    default:
+      return "Sin correo (enlace compartido a mano)";
+  }
+}
 
 const SALE_STATUS_LABEL: Record<string, string> = {
   DRAFT: "Borrador",
@@ -97,6 +122,9 @@ export default async function AdminSellerDetailPage({
             label="Invitado"
             value={profile.invitedAt ? `${formatDate(profile.invitedAt)}${profile.invitedByName ? ` · por ${profile.invitedByName}` : ""}` : "—"}
           />
+          {profile.accountStatus === "INVITED" && invitationEmailText(invitation) && (
+            <Fact label="Correo de invitación" value={invitationEmailText(invitation) ?? "—"} />
+          )}
           {profile.accountStatus === "SUSPENDED" && (
             <>
               <Fact label="Suspendido" value={`${formatDateTime(profile.suspendedAt)}${profile.suspendedByName ? ` · ${profile.suspendedByName}` : ""}`} />
@@ -111,6 +139,7 @@ export default async function AdminSellerDetailPage({
           sellerId={sellerId}
           accountStatus={profile.accountStatus}
           phone={profile.phone}
+          firstName={firstNameOf(profile.fullName)}
         />
       </Section>
 
