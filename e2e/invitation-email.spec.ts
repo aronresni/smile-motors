@@ -161,12 +161,32 @@ test.describe("Servicio — correo con el MISMO enlace de la invitación", () =>
     expect(msg.html.toLowerCase()).not.toMatch(/contraseña:\s*\S/);
   });
 
+  test("1b · ABRIR el enlace no lo gasta: la vista previa de WhatsApp ya no quema la invitación", async ({ request }) => {
+    // Lo que hace WhatsApp (y cualquier escáner de correo) al recibir el
+    // enlace: descargarlo por su cuenta para armar la vista previa. Antes eso
+    // canjeaba el token y la persona recibía "este enlace ya se usó".
+    const preview = await request.get(okLink.url, {
+      headers: { "user-agent": "WhatsApp/2.24.7.78 A" },
+    });
+    expect(preview.ok()).toBe(true);
+    expect(await preview.text()).toContain("Activa tu cuenta");
+    await request.head(okLink.url);
+
+    // La cuenta sigue SIN confirmar y sin sesión: nadie canjeó nada.
+    const { data } = await svc.auth.admin.getUserById(okLink.userId);
+    expect(data.user?.email_confirmed_at ?? null).toBeNull();
+    expect(data.user?.last_sign_in_at ?? null).toBeNull();
+    expect((await invitationRow(okLink.userId))[0].status).not.toBe("ACCEPTED");
+  });
+
   test("2 + 5 · el enlace DEL CORREO, abierto en producción: crea contraseña → ACTIVE → login normal", async ({ browser }) => {
     const url = /href="([^"]+)"/.exec(okMail.sent[0].html)![1];
     const password = `Correo-${stamp}-9x!`;
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     await page.goto(url);
+    // El token se canjea solo cuando lo confirma la persona.
+    await page.getByRole("button", { name: "Continuar" }).click();
     await page.waitForURL(`${PROD}/auth/accept-invite`, { timeout: 45_000 });
     await page.getByLabel("Nueva contraseña").fill(password);
     await page.getByLabel("Confirmar contraseña").fill(password);
@@ -255,6 +275,29 @@ test.describe("Servicio — correo con el MISMO enlace de la invitación", () =>
     expect(old.error).not.toBeNull();
     const fresh = await anon.auth.verifyOtp({ type: "invite", token_hash: tokenOf(again.link.url) });
     expect(fresh.error).toBeNull();
+  });
+
+  test("4b · invitación ya gastada (el enlace se abrió antes): reenviar la revive", async () => {
+    // Estado real de las cuentas que quemó la vista previa de WhatsApp antes
+    // de la corrección: cuenta CONFIRMADA por el canje, pero perfil todavía
+    // INVITED porque nadie llegó a crear una contraseña.
+    const email = `e2e-correo-gastada-${stamp}@motods.test`;
+    const first = await invite(email, "Gastada Prueba");
+    const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { auth: { persistSession: false } });
+    expect((await anon.auth.verifyOtp({ type: "invite", token_hash: tokenOf(first.url) })).error).toBeNull();
+
+    const { data: burned } = await svc.auth.admin.getUserById(first.userId);
+    expect(burned.user?.email_confirmed_at ?? null).not.toBeNull();
+    const { data: profile } = await svc.from("profiles").select("account_status").eq("id", first.userId).single();
+    expect(profile!.account_status).toBe("INVITED");
+
+    // Reenviar genera un enlace nuevo que SÍ sirve: el admin no necesita
+    // borrar ni recrear la cuenta.
+    const again = await generateInviteLink(svc, PROD, email);
+    if (!again.ok) throw new Error(`generateLink: ${again.code}`);
+    expect(again.link.url).not.toBe(first.url);
+    const fresh = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { auth: { persistSession: false } });
+    expect((await fresh.auth.verifyOtp({ type: "invite", token_hash: tokenOf(again.link.url) })).error).toBeNull();
   });
 
   test("doble clic / concurrencia: dos envíos simultáneos del mismo enlace → UN solo correo", async () => {
@@ -381,6 +424,7 @@ test.describe("Interfaz — sin Resend configurado, la invitación no se rompe",
     const guest = await browser.newContext({ baseURL: new URL(page.url()).origin });
     const guestPage = await guest.newPage();
     await guestPage.goto(url.replace(/^https?:\/\/[^/]+/, ""));
+    await guestPage.getByRole("button", { name: "Continuar" }).click();
     await guestPage.waitForURL(/\/auth\/accept-invite$/, { timeout: 30_000 });
     await expect(guestPage.getByRole("button", { name: "Activar mi cuenta" })).toBeVisible();
     await guest.close();

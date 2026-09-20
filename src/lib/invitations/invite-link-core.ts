@@ -9,7 +9,8 @@ import { ROUTES } from "@/lib/constants";
  *
  * El enlace es el de siempre: `generateLink({ type: "invite" })` de Supabase
  * Auth (no envía correo) + ruta propia `/auth/invitacion?token_hash=…`, que
- * canjea el token en el servidor. Un solo uso; generar otro invalida el
+ * canjea el token en el servidor SOLO ante el POST de la persona (abrirla no
+ * gasta el enlace). Un solo uso; generar otro invalida el
  * anterior. El token NUNCA se guarda: solo su resumen SHA-256
  * (`linkDigest`), que no autentica y sirve para comprobar que un correo lleva
  * el enlace vigente.

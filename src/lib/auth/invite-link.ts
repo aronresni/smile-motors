@@ -19,8 +19,10 @@ import {
  * proyecto con la sesión en el fragmento `#access_token=…`, que el servidor
  * no puede leer. Aquí se genera el token con la API de administración
  * (`generateLink`, que NO envía correo) y se arma un enlace a una ruta
- * propia: `/auth/invitacion?token_hash=…`. Esa ruta canjea el token en el
- * servidor y deja la sesión temporal en cookies.
+ * propia: `/auth/invitacion?token_hash=…`. Esa página NO canjea nada al
+ * abrirse: el canje ocurre en su POST (así la vista previa de WhatsApp o un
+ * escáner de correo no gastan la invitación) y deja la sesión temporal en
+ * cookies.
  *
  * El enlace es una credencial de un solo uso: el admin lo copia / manda por
  * WhatsApp y, además, se intenta enviar por correo (Resend) — siempre el
