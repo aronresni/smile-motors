@@ -90,9 +90,12 @@ test.describe("Gestión de vendedores — verificación de interfaz", () => {
       const resentUrl = (await resentBox.innerText()).trim();
       expect(resentUrl).not.toBe(inviteUrl);
 
+      // El enlace viejo ya no sirve: abrirlo no canjea nada (eso evita que la
+      // vista previa de WhatsApp lo gaste) y al confirmar avisa y va al login.
       const stale = await context.browser()!.newContext();
       const stalePage = await stale.newPage();
       await stalePage.goto(inviteUrl.replace(/^https?:\/\/[^/]+/, ""));
+      await stalePage.getByRole("button", { name: "Continuar" }).click();
       await stalePage.waitForURL(/\/login\?error=invite_invalid/, { timeout: 20_000 });
       await stale.close();
 
@@ -100,6 +103,7 @@ test.describe("Gestión de vendedores — verificación de interfaz", () => {
       const guest = await context.browser()!.newContext();
       const guestPage = await guest.newPage();
       await guestPage.goto(resentUrl.replace(/^https?:\/\/[^/]+/, ""));
+      await guestPage.getByRole("button", { name: "Continuar" }).click();
       await guestPage.waitForURL(/\/auth\/accept-invite$/, { timeout: 20_000 });
       await expect(guestPage.getByRole("heading", { name: /Bienvenido|Activa tu cuenta/ })).toBeVisible();
 
@@ -123,6 +127,7 @@ test.describe("Gestión de vendedores — verificación de interfaz", () => {
       const second = await context.browser()!.newContext();
       const secondPage = await second.newPage();
       await secondPage.goto(resentUrl.replace(/^https?:\/\/[^/]+/, ""));
+      await secondPage.getByRole("button", { name: "Continuar" }).click();
       await secondPage.waitForURL(/\/login\?error=invite_invalid/, { timeout: 20_000 });
       await expect(secondPage.getByText(/ya se usó o caducó/i)).toBeVisible();
       await second.close();
@@ -159,6 +164,12 @@ test.describe("Gestión de vendedores — verificación de interfaz", () => {
 
     // Base conocida: si una corrida anterior dejó al vendedor SUSPENDIDO,
     // reactivar primero (idempotente) antes de probar la suspensión en sí.
+    // Las acciones de la ficha son un componente de cliente: hay que esperar
+    // a que esté montado, o la comprobación de abajo (que no espera) lo da
+    // por ausente y la prueba sigue contra una ficha a medio pintar.
+    await expect(
+      page.getByRole("button", { name: /^(Suspender|Reactivar|Deshabilitar)$/ }).first(),
+    ).toBeVisible({ timeout: 20_000 });
     const reactivateFirst = page.getByRole("button", { name: "Reactivar" });
     if (await reactivateFirst.isVisible().catch(() => false)) {
       await reactivateFirst.click();
