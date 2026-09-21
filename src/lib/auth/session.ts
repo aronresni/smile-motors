@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { ROLES, ROUTES, type Role } from "@/lib/constants";
 import { canAccessZone, homeForRole, type Zone } from "@/lib/auth/access";
@@ -10,6 +11,20 @@ export interface AuthContext {
   userId: string;
   email: string | null;
   profile: Profile;
+}
+
+/** Programa la entrega push para después de la respuesta. Nunca lanza: si no
+ * hay contexto de petición (un script, por ejemplo) simplemente no se
+ * programa, y si la entrega falla no le importa a nadie más que al registro. */
+function schedulePushFlush(): void {
+  try {
+    after(async () => {
+      const { flushPushOutbox } = await import("@/lib/push/dispatch");
+      await flushPushOutbox();
+    });
+  } catch {
+    /* fuera de una petición: nada que programar */
+  }
 }
 
 /**
@@ -36,6 +51,13 @@ export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
     .single();
 
   if (error || !data || !data.is_active) return null;
+
+  // ÚNICO enganche de la entrega push. Toda notificación nace dentro de una
+  // petición autenticada (sus triggers exigen sesión), así que vaciar aquí la
+  // bandeja de salida las cubre todas — acciones y navegación por igual. Corre
+  // DESPUÉS de la respuesta (`after`), así que no la demora ni puede afectar a
+  // ninguna operación de negocio.
+  schedulePushFlush();
 
   const role: Role =
     data.role === ROLES.ADMIN || data.role === ROLES.SELLER

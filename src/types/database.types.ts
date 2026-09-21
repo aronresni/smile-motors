@@ -318,6 +318,7 @@ export type Database = {
           id: string
           message: string
           metadata: Json | null
+          push_dispatched_at: string | null
           read_at: string | null
           recipient_user_id: string
           sale_id: string | null
@@ -334,6 +335,7 @@ export type Database = {
           id?: string
           message: string
           metadata?: Json | null
+          push_dispatched_at?: string | null
           read_at?: string | null
           recipient_user_id: string
           sale_id?: string | null
@@ -350,6 +352,7 @@ export type Database = {
           id?: string
           message?: string
           metadata?: Json | null
+          push_dispatched_at?: string | null
           read_at?: string | null
           recipient_user_id?: string
           sale_id?: string | null
@@ -851,6 +854,56 @@ export type Database = {
           {
             foreignKeyName: "profiles_suspended_by_fkey"
             columns: ["suspended_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          device_label: string | null
+          endpoint: string
+          id: string
+          last_used_at: string | null
+          p256dh: string
+          revoked_at: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          device_label?: string | null
+          endpoint: string
+          id?: string
+          last_used_at?: string | null
+          p256dh: string
+          revoked_at?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          device_label?: string | null
+          endpoint?: string
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string
+          revoked_at?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -2996,6 +3049,33 @@ export type Database = {
         }
         Returns: Json
       }
+      push_claim_pending: {
+        Args: { p_limit?: number }
+        Returns: {
+          auth: string
+          destination_url: string
+          endpoint: string
+          message: string
+          notification_id: string
+          p256dh: string
+          recipient_id: string
+          subscription_id: string
+          title: string
+          unread_count: number
+        }[]
+      }
+      push_subscription_register: {
+        Args: {
+          p_auth: string
+          p_device_label?: string
+          p_endpoint: string
+          p_p256dh: string
+          p_user_agent?: string
+        }
+        Returns: Json
+      }
+      push_subscription_revoke: { Args: { p_endpoint: string }; Returns: Json }
+      push_unread_count: { Args: { p_user_id: string }; Returns: number }
       record_sale_document: {
         Args: {
           p_file_size_bytes?: number

@@ -3,6 +3,8 @@ import { requireZone } from "@/lib/auth/session";
 import { ROUTES } from "@/lib/constants";
 import { listNotifications } from "@/lib/notifications/server";
 import { NotificationList } from "@/components/notifications/notification-list";
+import { PushToggle } from "@/components/notifications/push-toggle";
+import { vapidPublicKey } from "@/lib/push/transport";
 
 export const metadata: Metadata = { title: "Notificaciones · Admin" };
 export const dynamic = "force-dynamic";
@@ -27,6 +29,7 @@ export default async function AdminNotificacionesPage({
           vendedores que activan su cuenta. Son distintas de Actividad y Alertas, que son del concesionario.
         </p>
       </div>
+      <PushToggle vapidPublicKey={vapidPublicKey()} />
       <NotificationList
         basePath={ROUTES.adminNotificaciones}
         items={result.items}

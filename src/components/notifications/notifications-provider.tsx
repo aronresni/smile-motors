@@ -214,6 +214,50 @@ export function NotificationsProvider({
     router.refresh();
   }, [supabase, router]);
 
+  // Este dispositivo pasa a ser de QUIEN tiene la sesión ahora.
+  //
+  // Es la defensa que hace que, si un vendedor entra en el teléfono de otro,
+  // las notificaciones del anterior dejen de llegar ahí — sin depender de que
+  // el cierre de sesión anterior fuera limpio. De paso recupera los endpoints
+  // que el navegador rota por su cuenta. No pide permiso ni registra nada
+  // nuevo: solo reclama lo que ya existe en este navegador.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { existingRegistration, toKeys, deviceLabel } = await import("@/lib/push/client");
+        const registration = await existingRegistration();
+        const subscription = await registration?.pushManager.getSubscription();
+        if (cancelled || !subscription) return;
+        const keys = toKeys(subscription);
+        if (!keys) return;
+        const { registerPushSubscription } = await import("@/lib/push/actions");
+        await registerPushSubscription({ ...keys, deviceLabel: deviceLabel() });
+      } catch {
+        /* sin push en este navegador: nada que reclamar */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  // Insignia del icono instalado: SIEMPRE el contador real de la base (el
+  // mismo que la campana), nunca una cuenta propia. Al llegar a cero, se
+  // quita. El service worker la actualiza igual cuando llega un push con la
+  // app cerrada.
+  useEffect(() => {
+    const nav = navigator as Navigator & {
+      setAppBadge?: (count?: number) => Promise<void>;
+      clearAppBadge?: () => Promise<void>;
+    };
+    if (!nav.setAppBadge) return;
+    const apply = unread > 0 ? nav.setAppBadge(unread) : nav.clearAppBadge?.();
+    void apply?.catch(() => {
+      /* la insignia no es crítica */
+    });
+  }, [unread]);
+
   const value = useMemo<NotificationsContextValue>(
     () => ({ zone, unread, recent, loadingRecent, version, live, loadRecent, open, markAllRead }),
     [zone, unread, recent, loadingRecent, version, live, loadRecent, open, markAllRead],

@@ -68,6 +68,21 @@ scripts de servicio (sin sesión) nunca notifican.
   90°); una foto sin tipo MIME (iCloud / Archivos) se acepta igual; y cuando
   el archivo no se puede abrir o el teléfono no llega a entregarlo, el
   vendedor ve un mensaje accionable —no un cuelgue— y puede reintentar.
+- **`push-notifications.spec.ts`** — notificaciones en el teléfono (Web
+  Push), el canal de entrega sobre las notificaciones que ya existían. Con
+  cuentas SANDBOX y un transporte de CAPTURA (nunca se envía nada a un
+  teléfono real): alta del dispositivo a nombre de quien tiene la sesión; un
+  vendedor no ve, ni da de baja, ni inserta el dispositivo de otro, ni puede
+  repartir push; una notificación → una entrega por aparato y una sola fila;
+  dos repartos simultáneos no entregan lo mismo dos veces; lo ya leído no
+  interrumpe; un endpoint muerto (410) se da de baja y la notificación
+  queda intacta; un fallo temporal NO borra el dispositivo; el mismo teléfono
+  con otra cuenta deja de recibir lo del anterior; y nada sale de la
+  partición de pruebas. En navegador: nunca se pide el permiso al cargar
+  —solo al tocar el botón— y el alta llega a la base; en iPhone sin instalar
+  se explica cómo hacerlo; con el permiso denegado se dice y no se insiste;
+  el service worker se sirve y NO intercepta peticiones (sin caché de datos);
+  y la insignia del icono sigue al contador real de no leídas.
 - **`seller-management.spec.ts`** — invitación/activación/suspensión de
   vendedores, contra el shell real de `/admin`: el modal "Invitar vendedor"
   (con su validación), la navegación "Vendedores" del shell de admin, y el

@@ -3,6 +3,8 @@ import { requireZone } from "@/lib/auth/session";
 import { ROUTES } from "@/lib/constants";
 import { listNotifications } from "@/lib/notifications/server";
 import { NotificationList } from "@/components/notifications/notification-list";
+import { PushToggle } from "@/components/notifications/push-toggle";
+import { vapidPublicKey } from "@/lib/push/transport";
 
 export const metadata: Metadata = { title: "Notificaciones" };
 export const dynamic = "force-dynamic";
@@ -27,6 +29,7 @@ export default async function SellerNotificacionesPage({
           Lo que administración hizo con tus ventas, contratos, ediciones y liquidaciones.
         </p>
       </div>
+      <PushToggle vapidPublicKey={vapidPublicKey()} />
       <NotificationList
         basePath={ROUTES.sellerNotificaciones}
         items={result.items}

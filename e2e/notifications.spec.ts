@@ -220,7 +220,8 @@ test("10 + 11 · leer una (3 → 2) navega a su destino; 'Marcar todas como leí
   await expect(badge(page)).toHaveText("2");
 
   await page.goto("/seller/notificaciones");
-  await expect(page.getByRole("heading", { name: "Notificaciones" })).toBeVisible();
+  // : la página tiene además "Notificaciones del teléfono" (activación push).
+  await expect(page.getByRole("heading", { name: "Notificaciones", exact: true })).toBeVisible();
   await expect(page.getByTestId("notification-list").getByTestId("notification-row").filter({ hasText: "Venta devuelta" })).toContainText("Motivo: Revisar el documento");
   await page.getByRole("button", { name: "Marcar todas como leídas" }).click();
   await expect(badge(page)).toHaveCount(0);

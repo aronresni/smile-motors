@@ -5,8 +5,7 @@ import { deriveSellerIdentity } from "@/lib/seller/identity";
 import { ROUTES } from "@/lib/constants";
 import { BrandLogo } from "@/components/brand/brand-mark";
 import { PageHeader } from "@/components/ui/page-header";
-import {
-  ChevronRightIcon,
+import { BellIcon, ChevronRightIcon,
   LogOutIcon,
   PercentIcon,
   PlusIcon,
@@ -57,6 +56,7 @@ export default async function SellerMenuPage() {
         <MenuLink href={ROUTES.sellerVentas} title="Mis ventas" description="Borradores, pendientes, vendidas y pagadas." icon={<ReceiptIcon size={18} />} />
         <MenuLink href={ROUTES.sellerComisiones} title="Mis comisiones" description="Comisiones confirmadas, con el detalle de cada venta." icon={<PercentIcon size={18} />} />
         <MenuLink href={ROUTES.sellerLiquidaciones} title="Mis liquidaciones" description="Pagos semanales aprobados, con su detalle." icon={<WalletIcon size={18} />} />
+        <MenuLink href={ROUTES.sellerNotificaciones} title="Notificaciones" description="Tus avisos y las notificaciones en el teléfono." icon={<BellIcon size={18} />} />
       </div>
 
       <LogoutButton className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border-strong bg-surface px-4 py-3.5 text-sm font-semibold text-text-secondary transition-colors hover:bg-surface-elevated hover:text-foreground">
