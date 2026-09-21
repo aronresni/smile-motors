@@ -9,12 +9,22 @@ import {
   SELLER_NAV_ITEMS,
   isNavItemActive,
 } from "@/components/seller/nav-items";
-import { LogOutIcon, WalletIcon } from "@/components/ui/icons";
+import { CalculatorIcon, LogOutIcon, PercentIcon, WalletIcon } from "@/components/ui/icons";
 import { LogoutButton } from "@/components/auth/logout-button";
 
 /** Accesos extra solo en escritorio (en móvil viven en "Menú"). */
-const EXTRA = [
-  { href: ROUTES.sellerLiquidaciones, label: "Mis liquidaciones", Icon: WalletIcon },
+const EXTRA_GROUPS = [
+  {
+    title: "Herramientas",
+    items: [{ href: ROUTES.sellerCalculadora, label: "Calculadora", Icon: CalculatorIcon }],
+  },
+  {
+    title: "Mis pagos",
+    items: [
+      { href: ROUTES.sellerComisiones, label: "Mis comisiones", Icon: PercentIcon },
+      { href: ROUTES.sellerLiquidaciones, label: "Mis liquidaciones", Icon: WalletIcon },
+    ],
+  },
 ];
 
 /** Riel de navegación lateral (escritorio). Contrapartida de la barra inferior. */
@@ -64,25 +74,29 @@ export function SellerSidebar() {
           })}
         </ul>
 
-        <p className="mb-1.5 mt-6 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-          Mis pagos
-        </p>
-        <ul className="space-y-1">
-          {EXTRA.map(({ href, label, Icon }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-            return (
-              <li key={href}>
-                <Link href={href} aria-current={active ? "page" : undefined} className={linkClass(active)}>
-                  {active && (
-                    <span aria-hidden="true" className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-brand" />
-                  )}
-                  <Icon size={19} className={cn(active ? "text-brand" : "text-muted-foreground")} />
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        {EXTRA_GROUPS.map((group) => (
+          <div key={group.title}>
+            <p className="mb-1.5 mt-6 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+              {group.title}
+            </p>
+            <ul className="space-y-1">
+              {group.items.map(({ href, label, Icon }) => {
+                const active = pathname === href || pathname.startsWith(`${href}/`);
+                return (
+                  <li key={href}>
+                    <Link href={href} aria-current={active ? "page" : undefined} className={linkClass(active)}>
+                      {active && (
+                        <span aria-hidden="true" className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-brand" />
+                      )}
+                      <Icon size={19} className={cn(active ? "text-brand" : "text-muted-foreground")} />
+                      {label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       <div className="border-t border-border px-3 py-3">

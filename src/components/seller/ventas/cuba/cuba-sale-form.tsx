@@ -60,6 +60,25 @@ interface CubaSaleFormProps {
   /** Si se edita un borrador existente. */
   initialSaleId?: string;
   initialDraft?: CubaSaleDraftDto;
+  /**
+   * Unidad que llega preseleccionada desde el catálogo o la calculadora. El
+   * servidor ya validó que el producto y la variante siguen activos; aquí solo
+   * se usa como valor inicial del formulario (y se vuelve a validar al
+   * guardar, en `save_cuba_sale_draft`).
+   */
+  prefillUnit?: PrefillUnit;
+}
+
+/** Unidad prellenada (producto ya verificado en el servidor). */
+export interface PrefillUnit {
+  catalogModelId: string;
+  modelName: string;
+  variantId: string | null;
+  variantLabel: string;
+  listPriceCents: number | null;
+  fixedPriceCents: number | null;
+  fixedCommissionCents: number | null;
+  agreedPriceCents: number;
 }
 
 interface DocSlot {
@@ -112,6 +131,7 @@ function buildDefaults(
   sellerId: string,
   sellerName: string,
   saleDate: string,
+  prefillUnit?: PrefillUnit,
 ): CubaSaleFormValues {
   return {
     operationType: "cuba",
@@ -136,7 +156,11 @@ function buildDefaults(
       postalCode: "",
     },
     coBuyer: null,
-    units: [makeEmptyUnit("unit-initial")],
+    units: [
+      prefillUnit
+        ? { ...makeEmptyUnit("unit-initial"), ...prefillUnit }
+        : makeEmptyUnit("unit-initial"),
+    ],
     extras: [],
     cubaRecipient: {
       documentFront: emptyDocument(),
@@ -162,6 +186,7 @@ export function CubaSaleForm({
   paymentMethods,
   initialSaleId,
   initialDraft,
+  prefillUnit,
 }: CubaSaleFormProps) {
   const router = useRouter();
   const methodsById = useMemo(
@@ -176,7 +201,7 @@ export function CubaSaleForm({
           buildDefaults(sellerId, sellerName, defaultSaleDate),
           initialDraft,
         )
-      : buildDefaults(sellerId, sellerName, defaultSaleDate),
+      : buildDefaults(sellerId, sellerName, defaultSaleDate, prefillUnit),
     mode: "onSubmit",
     reValidateMode: "onChange",
   });

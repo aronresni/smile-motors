@@ -172,7 +172,7 @@ test.describe("Admin · navegación y búsqueda", () => {
 });
 
 const ADMIN_PAGES = ["/admin", "/admin/ventas", "/admin/vendedores", "/admin/productos", "/admin/aprobaciones", "/admin/comisiones", "/admin/liquidaciones", "/admin/actividad", "/admin/alertas", "/admin/reportes", "/admin/logistica"];
-const SELLER_PAGES = ["/seller", "/seller/ventas", "/seller/ventas/nueva/cuba", "/seller/comisiones", "/seller/menu"];
+const SELLER_PAGES = ["/seller", "/seller/ventas", "/seller/ventas/nueva/cuba", "/seller/stock", "/seller/calculadora", "/seller/comisiones", "/seller/menu"];
 
 for (const width of [375, 768, 1440]) {
   test(`responsive ${width}px: sin overflow horizontal (admin + vendedor)`, async ({ page }) => {

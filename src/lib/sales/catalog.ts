@@ -5,6 +5,8 @@
  * Se consulta con límites; no se descarga todo el catálogo al navegador.
  */
 import { createClient } from "@/lib/supabase/client";
+import { env } from "@/lib/env";
+import { productImagePublicUrl } from "@/lib/admin/product-image-url";
 
 export interface CatalogVariant {
   id: string;
@@ -37,11 +39,13 @@ export interface CatalogModel {
    */
   fixedPriceCents: number | null;
   fixedCommissionCents: number | null;
+  /** Primera imagen real del catálogo (o `null` si aún no se subió ninguna). */
+  imageUrl: string | null;
   variants: CatalogVariant[];
 }
 
 const SELECT =
-  "id, name, brand, category, displacement, base_price_cents, cuba_total_cents, default_reference_price_cents, default_base_commission_cents, product_variants(id, color_name, is_active)";
+  "id, name, brand, category, displacement, base_price_cents, cuba_total_cents, default_reference_price_cents, default_base_commission_cents, product_variants(id, color_name, is_active), product_images(storage_path, position)";
 
 interface ProductRow {
   id: string;
@@ -54,6 +58,7 @@ interface ProductRow {
   default_reference_price_cents: number | null;
   default_base_commission_cents: number | null;
   product_variants: { id: string; color_name: string; is_active: boolean }[] | null;
+  product_images: { storage_path: string | null; position: number }[] | null;
 }
 
 function toModel(row: ProductRow): CatalogModel {
@@ -70,6 +75,11 @@ function toModel(row: ProductRow): CatalogModel {
     listPriceCents: cuba || base,
     fixedPriceCents: row.default_reference_price_cents,
     fixedCommissionCents: row.default_base_commission_cents,
+    imageUrl:
+      (row.product_images ?? [])
+        .filter((i): i is { storage_path: string; position: number } => Boolean(i.storage_path))
+        .sort((a, b) => a.position - b.position)
+        .map((i) => productImagePublicUrl(env.NEXT_PUBLIC_SUPABASE_URL, i.storage_path))[0] ?? null,
     // Una variante desactivada por Admin ya no debe ofrecerse en ventas
     // nuevas (server también lo exige en `save_cuba_sale_draft`).
     variants: (row.product_variants ?? [])

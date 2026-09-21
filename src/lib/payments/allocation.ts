@@ -123,8 +123,18 @@ export interface CoverageSummary {
   hasInvalid: boolean;
 }
 
+/**
+ * Lo MÍNIMO que hace falta para liquidar y medir cobertura. El formulario de
+ * venta pasa `AllocationFormValue` completo; la calculadora del vendedor pasa
+ * su propia aprobación simulada. Una sola aritmética para los dos.
+ */
+export type CoverageInput = Pick<
+  AllocationFormValue,
+  "paymentMethodId" | "inputMode" | "amountCents" | "planId"
+>;
+
 export function summarizeCoverage(
-  allocations: AllocationFormValue[],
+  allocations: CoverageInput[],
   saleTotalCents: number,
   methodsById: Record<string, PaymentMethodView>,
 ): CoverageSummary {

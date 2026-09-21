@@ -173,6 +173,24 @@ ni pasar a VENDIDA y aparece la alerta "Comisión faltante".
 > silencio (hay que deshacerlo a propósito, y queda registrado); todo o nada
 > si algo está bloqueado; altas y bajas; y nadie toca las ventas de otro.
 >
+> `npm run test:actors -- --admin e2e-smile-admin@motods.test --admin2
+> e2e-sm-admin@motods.test --seller e2e-smile-seller@motods.test` — atribución:
+> cada acción guarda y muestra QUIÉN la hizo. Usa DOS administradores distintos
+> a propósito (con uno solo no se demuestra nada): contratos, cobros, cierres,
+> aprobaciones, productos y cuentas de vendedor; anti-suplantación (el actor
+> sale de `auth.uid()`, nunca del navegador); y el vendedor ve el nombre del
+> administrador sin poder leer `profiles`.
+>
+> `npm run test:calculator -- --admin e2e-smile-admin@motods.test --seller
+> e2e-smile-seller@motods.test` — catálogo del vendedor ("Stock") y
+> calculadora: el catálogo es de SOLO LECTURA (ni productos, ni colores, ni
+> fees de financieras); convertir una simulación crea un BORRADOR y nada más
+> (sin contratos, sin pagos liquidados, sin comisión); el fee y el neto los
+> calcula el servidor desde la configuración vigente (el neto que mande el
+> cliente se ignora); la cobertura se mide en NETO; y el catálogo no
+> reintroduce VIN ni cantidades. La parte de interfaz, en un teléfono de
+> 375 px, está en `e2e/seller-stock-calculator.spec.ts`.
+>
 > En equipos donde una política de control de aplicaciones bloquea el binario
 > nativo de SWC, Turbopack no arranca: `playwright.config.ts` usa
 > `next dev --webpack` y el build de producción se ejecuta con

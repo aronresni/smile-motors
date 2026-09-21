@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { PercentIcon, PlusIcon, ReceiptIcon } from "@/components/ui/icons";
+import { BoxesIcon, CalculatorIcon, PercentIcon, PlusIcon, ReceiptIcon } from "@/components/ui/icons";
 
 function Tile({
   href,
@@ -52,6 +52,8 @@ export function SellerQuickAccess() {
     <nav aria-label="Accesos rápidos" className="grid grid-cols-3 gap-2.5 sm:gap-3">
       <Tile href={ROUTES.sellerVentaNueva} label="Nueva venta" hint="Registrar una operación" icon={<PlusIcon size={20} />} primary />
       <Tile href={ROUTES.sellerVentas} label="Mis ventas" hint="Estado de cada venta" icon={<ReceiptIcon size={20} />} />
+      <Tile href={ROUTES.sellerCalculadora} label="Calculadora" hint="Simula precio y financiación" icon={<CalculatorIcon size={20} />} />
+      <Tile href={ROUTES.sellerStock} label="Stock" hint="Catálogo disponible" icon={<BoxesIcon size={20} />} />
       <Tile href={ROUTES.sellerComisiones} label="Comisiones" hint="Confirmadas y por cobrar" icon={<PercentIcon size={20} />} />
     </nav>
   );

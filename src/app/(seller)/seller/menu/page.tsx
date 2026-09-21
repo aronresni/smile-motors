@@ -5,7 +5,7 @@ import { deriveSellerIdentity } from "@/lib/seller/identity";
 import { ROUTES } from "@/lib/constants";
 import { BrandLogo } from "@/components/brand/brand-mark";
 import { PageHeader } from "@/components/ui/page-header";
-import { BellIcon, ChevronRightIcon,
+import { BellIcon, BoxesIcon, CalculatorIcon, ChevronRightIcon,
   LogOutIcon,
   PercentIcon,
   PlusIcon,
@@ -53,6 +53,8 @@ export default async function SellerMenuPage() {
 
       <div className="space-y-2.5">
         <MenuLink href={ROUTES.sellerVentaNueva} title="Nueva venta" description="Registra una operación nueva." icon={<PlusIcon size={18} />} />
+        <MenuLink href={ROUTES.sellerCalculadora} title="Calculadora" description="Simula precios, financiación y cuánto falta cubrir." icon={<CalculatorIcon size={18} />} />
+        <MenuLink href={ROUTES.sellerStock} title="Stock" description="Catálogo de todo lo que se puede vender hoy." icon={<BoxesIcon size={18} />} />
         <MenuLink href={ROUTES.sellerVentas} title="Mis ventas" description="Borradores, pendientes, vendidas y pagadas." icon={<ReceiptIcon size={18} />} />
         <MenuLink href={ROUTES.sellerComisiones} title="Mis comisiones" description="Comisiones confirmadas, con el detalle de cada venta." icon={<PercentIcon size={18} />} />
         <MenuLink href={ROUTES.sellerLiquidaciones} title="Mis liquidaciones" description="Pagos semanales aprobados, con su detalle." icon={<WalletIcon size={18} />} />

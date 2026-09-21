@@ -22,6 +22,8 @@ export const ROUTES = {
   sellerVentaNueva: "/seller/ventas/nueva",
   sellerVentaNuevaCuba: "/seller/ventas/nueva/cuba",
   sellerVentaNuevaUsa: "/seller/ventas/nueva/usa",
+  sellerStock: "/seller/stock",
+  sellerCalculadora: "/seller/calculadora",
   sellerMenu: "/seller/menu",
   sellerComisiones: "/seller/comisiones",
   sellerLiquidaciones: "/seller/liquidaciones",

@@ -199,8 +199,16 @@ test("10 · VIN/stock ausente de navegación, alertas, reportes, actividad y bú
   await page.keyboard.press("Escape");
 
   await login(page, SELLER_EMAIL);
+  // "Stock" volvió a la barra del vendedor, pero ahora significa CATÁLOGO: lo
+  // que se puede vender hoy. Sigue sin haber inventario físico — eso es lo que
+  // se comprueba aquí (la pantalla entera la cubre seller-stock-calculator).
   const sellerNav = page.getByRole("navigation", { name: "Navegación del vendedor" }).first();
-  await expect(sellerNav.getByRole("link", { name: "Stock" })).toHaveCount(0);
+  await sellerNav.getByRole("link", { name: "Stock" }).click();
+  await page.waitForURL(/\/seller\/stock$/);
+  await expectNoVinOrStock(page);
+  await expect(page.getByText("Cantidad reportada")).toHaveCount(0);
+
+  // La ruta vieja del inventario físico ya no existe: lleva al catálogo.
   await page.goto("/seller/inventario");
-  await expect(page).toHaveURL(/\/seller$/);
+  await expect(page).toHaveURL(/\/seller\/stock$/);
 });

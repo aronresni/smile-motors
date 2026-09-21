@@ -454,3 +454,23 @@ export function EyeIcon(p: IconProps) {
     </svg>
   );
 }
+
+export function CalculatorIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p)}>
+      <rect x="4" y="3" width="16" height="18" rx="2.5" />
+      <path d="M8 7h8" />
+      <path d="M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01" />
+    </svg>
+  );
+}
+
+export function ImageIcon(p: IconProps) {
+  return (
+    <svg {...svgProps(p)}>
+      <rect x="3" y="4" width="18" height="16" rx="2.5" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path d="m4 17 4.5-4.5a1.5 1.5 0 0 1 2 0L15 17M14 14l1.8-1.8a1.5 1.5 0 0 1 2.1 0L20 14.2" />
+    </svg>
+  );
+}

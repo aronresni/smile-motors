@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { ROUTES } from "@/lib/constants";
 import {
+  BoxesIcon,
   HomeIcon,
   MenuGridIcon,
-  PercentIcon,
   PlusIcon,
   ReceiptIcon,
   type IconProps,
@@ -37,10 +37,12 @@ export const SELLER_NAV_ITEMS: SellerNavItem[] = [
     prominent: true,
   },
   {
-    key: "comisiones",
-    label: "Comisiones",
-    href: ROUTES.sellerComisiones,
-    Icon: PercentIcon,
+    // "Stock" es la palabra del vendedor para el catálogo de lo que se puede
+    // vender hoy: no hay inventario físico detrás (ni VIN, ni cantidades).
+    key: "stock",
+    label: "Stock",
+    href: ROUTES.sellerStock,
+    Icon: BoxesIcon,
     matchNested: true,
   },
   { key: "menu", label: "Menú", href: ROUTES.sellerMenu, Icon: MenuGridIcon },
