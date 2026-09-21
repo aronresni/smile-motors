@@ -139,6 +139,8 @@ async function main() {
     execFileSync("node", ["--env-file=.env.local", "supabase/scripts/create-user.mjs", "--sandbox", "--email", email, "--password", values.password, "--role", role, "--name", name], { cwd, stdio: "ignore" });
   }
   const admin = await signIn(values.admin);
+  // Desde 2026-09-21 el mensaje lleva el NOMBRE de quien actuó, no un genérico.
+  const adminName = (await svc.rpc("person_display_name", { p_profile_id: admin.id })).data ?? "Administración";
   const admin2 = await signIn(ADMIN2);
   const seller = await signIn(values.seller);
   const seller2 = await signIn(SELLER2);
@@ -249,7 +251,7 @@ async function main() {
   let n = await notes({ sale_id: F, type: "CONTRACT_SENT" });
   check("el vendedor recibe 'Contrato enviado' de Synchrony",
     n.length === 1 && n[0].recipient_user_id === seller.id
-      && n[0].message === "Administración envió el contrato de SYNCHRONY NUEVO MUEBLES para " + buyerPhrase + "."
+      && n[0].message === adminName + " envió el contrato de SYNCHRONY NUEVO MUEBLES para " + buyerPhrase + "."
       && n[0].destination_url === "/seller/ventas/" + F, n);
   check("el vendedor B no recibe nada", (await notes({ recipient_user_id: seller2.id, sale_id: F })).length === 0);
   r = await rpc(admin.c, "mark_financing_sent", { p_sale_id: F, p_payment_allocation_id: allocKaf });
@@ -341,20 +343,20 @@ async function main() {
   const numberA = r.saleNumber;
   n = await notes({ sale_id: A, type: "SALE_MARKED_SOLD" });
   check("'Venta confirmada' solo al vendedor", r.ok === true && n.length === 1 && n[0].recipient_user_id === seller.id
-    && n[0].message === `Administración confirmó la venta ${numberA}.` && n[0].destination_url === `/seller/ventas/${A}`, n);
+    && n[0].message === `${adminName} confirmó la venta ${numberA}.` && n[0].destination_url === `/seller/ventas/${A}`, n);
 
   console.log("\n· Venta devuelta a borrador → vendedor (con motivo)");
   const R = await makeSale({ buyer: "Devuelta" });
   r = await rpc(admin.c, "return_sale_to_draft", { p_sale_id: R, p_reason: "Falta la firma del cliente" });
   n = await notes({ sale_id: R, type: "SALE_RETURNED_TO_DRAFT" });
   check("'Venta devuelta' con el motivo", r.ok === true && n.length === 1 && n[0].recipient_user_id === seller.id
-    && n[0].message === `Administración devolvió la venta de E2E Devuelta ${stamp} a borrador. Motivo: Falta la firma del cliente`, n);
+    && n[0].message === `${adminName} devolvió la venta de E2E Devuelta ${stamp} a borrador. Motivo: Falta la firma del cliente`, n);
 
   console.log("\n· Corrección administrativa directa → vendedor (una por edición, no por notas internas)");
   r = await rpc(admin.c, "admin_update_cuba_sale", { p_sale_id: A, p_reason: "Datos del cliente", p_payload: { buyer: { phone: "(305) 555-0199", city: "Hialeah" } } });
   n = await notes({ sale_id: A, type: "ADMIN_SALE_CORRECTED" });
   check("edición de 2 campos → UNA 'Venta actualizada'", r.ok === true && n.length === 1 && n[0].recipient_user_id === seller.id
-    && n[0].message === `Administración actualizó la venta ${numberA}.`, { r, n: n.length });
+    && n[0].message === `${adminName} actualizó la venta ${numberA}.`, { r, n: n.length });
   r = await rpc(admin.c, "admin_update_cuba_sale", { p_sale_id: A, p_reason: "Nota", p_payload: { internalNotes: `Nota interna ${stamp}` } });
   check("solo notas internas → sin notificación", r.ok === true && (await notes({ sale_id: A, type: "ADMIN_SALE_CORRECTED" })).length === 1, r);
 
@@ -371,14 +373,14 @@ async function main() {
   r = await rpc(admin.c, "reject_sale_edit_request", { p_request_id: req1, p_review_note: "El documento no coincide" });
   n = await notes({ sale_id: A, type: "SALE_EDIT_REJECTED" });
   check("'Edición rechazada' al vendedor con el motivo", r.ok === true && n.length === 1 && n[0].recipient_user_id === seller.id
-    && n[0].message === `Administración rechazó la solicitud de cambios de la venta ${numberA}. Motivo: El documento no coincide`, n);
+    && n[0].message === `${adminName} rechazó la solicitud de cambios de la venta ${numberA}. Motivo: El documento no coincide`, n);
   r = await rpc(admin.c, "reject_sale_edit_request", { p_request_id: req1, p_review_note: "otra vez" });
   check("rechazar de nuevo → falla y no duplica", r.ok === false && (await notes({ sale_id: A, type: "SALE_EDIT_REJECTED" })).length === 1, r);
   r = await rpc(seller.c, "request_sale_edit", { p_sale_id: A, p_reason: "Cambio de teléfono", p_changes: [{ path: "buyer.phone", oldValue: pA.phone, newValue: "(305) 555-0112" }] });
   r = await rpc(admin.c, "approve_sale_edit_request", { p_request_id: r.requestId });
   n = await notes({ sale_id: A, type: "SALE_EDIT_APPROVED" });
   check("'Edición aprobada' al vendedor", r.ok === true && n.length === 1
-    && n[0].message === `Administración aprobó los cambios solicitados para la venta ${numberA}.`, n);
+    && n[0].message === `${adminName} aprobó los cambios solicitados para la venta ${numberA}.`, n);
   check("aprobar una solicitud no genera además 'Venta actualizada'", (await notes({ sale_id: A, type: "ADMIN_SALE_CORRECTED" })).length === 1);
 
   // ------------------------------------------------------------------ 9

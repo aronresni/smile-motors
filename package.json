@@ -20,7 +20,8 @@
     "test:commissions": "node --env-file=.env.local supabase/scripts/test-commission-fixtures.mjs",
     "test:weekly": "node --env-file=.env.local supabase/scripts/test-seller-weekly-liquidation.mjs",
     "test:notifications": "node --env-file=.env.local supabase/scripts/test-notifications.mjs",
-    "test:financing": "node --env-file=.env.local supabase/scripts/test-financing-edit.mjs"
+    "test:financing": "node --env-file=.env.local supabase/scripts/test-financing-edit.mjs",
+    "test:actors": "node --env-file=.env.local supabase/scripts/test-actor-attribution.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

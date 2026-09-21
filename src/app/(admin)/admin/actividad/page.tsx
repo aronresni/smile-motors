@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getActivityFeed } from "@/lib/admin/activity";
+import { getActivityFeed, getAdminFilterOptions } from "@/lib/admin/activity";
 import { getSellerFilterOptions } from "@/lib/admin/sellers";
 import {
   ACTIVITY_PAGE_SIZE,
@@ -21,9 +21,10 @@ export default async function AdminActividadPage({
   const sp = await searchParams;
   const query = parseActivityListSearchParams(sp);
 
-  const [{ items, total }, sellers] = await Promise.all([
+  const [{ items, total }, sellers, admins] = await Promise.all([
     getActivityFeed({
       category: query.category,
+      actorId: query.actorId,
       sellerId: query.sellerId,
       search: query.search || null,
       startDate: query.startDate,
@@ -32,6 +33,7 @@ export default async function AdminActividadPage({
       offset: (query.page - 1) * ACTIVITY_PAGE_SIZE,
     }),
     getSellerFilterOptions(),
+    getAdminFilterOptions(),
   ]);
 
   return (
@@ -44,7 +46,7 @@ export default async function AdminActividadPage({
         </p>
       </div>
 
-      <ActivityToolbar query={query} sellers={sellers} />
+      <ActivityToolbar query={query} sellers={sellers} admins={admins} />
 
       <ActivityList items={items} />
 

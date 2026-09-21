@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { getLiquidationDetail } from "@/lib/admin/liquidations";
 import { formatCents } from "@/lib/money";
+import { ROLES } from "@/lib/constants";
+import { ActorIdentity } from "@/components/ui/actor-identity";
 import { LiquidationActivitySection } from "@/components/seller/liquidaciones/liquidation-activity-section";
 import { LiquidationCommissionItems } from "@/components/seller/liquidaciones/liquidation-commission-items";
 import { LiquidationAdjustmentsList } from "@/components/seller/liquidaciones/liquidation-adjustments-list";
@@ -25,6 +27,18 @@ function Section({ title, children, action }: { title: string; children: ReactNo
     </div>
   );
 }
+function formatDateTime(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return new Intl.DateTimeFormat("es-DO", {
+    day: "2-digit",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(d);
+}
+
 function formatDate(iso: string): string {
   const d = new Date(iso + "T00:00:00Z");
   if (Number.isNaN(d.getTime())) return iso;
@@ -85,6 +99,38 @@ export default async function AdminLiquidationDetailPage({
       </Section>
 
       <Section title="Ciclo de vida">
+        {/* Quién hizo cada paso. Los datos ya venían de la RPC pero no se
+            mostraban en ninguna pantalla. */}
+        {(detail.approvedAt || detail.paidAt) && (
+          <dl className="mb-4 grid gap-3 border-b border-border pb-4 sm:grid-cols-2">
+            {detail.approvedAt && (
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Aprobada por</dt>
+                <dd className="mt-1">
+                  <ActorIdentity
+                    name={detail.approvedByName}
+                    role={ROLES.ADMIN}
+                    timestamp={formatDateTime(detail.approvedAt)}
+                    size="sm"
+                  />
+                </dd>
+              </div>
+            )}
+            {detail.paidAt && (
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Pagada por</dt>
+                <dd className="mt-1">
+                  <ActorIdentity
+                    name={detail.paidByName}
+                    role={ROLES.ADMIN}
+                    timestamp={formatDateTime(detail.paidAt)}
+                    size="sm"
+                  />
+                </dd>
+              </div>
+            )}
+          </dl>
+        )}
         <LiquidationLifecycleActions
           liquidationId={detail.id}
           status={detail.status}

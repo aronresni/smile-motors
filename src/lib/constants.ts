@@ -39,6 +39,7 @@ export const ROUTES = {
   adminReportes: "/admin/reportes",
   adminLogistica: "/admin/logistica",
   adminNotificaciones: "/admin/notificaciones",
+  adminPerfil: "/admin/perfil",
   authAcceptInvite: "/auth/accept-invite",
   /** Enlace que recibe la persona invitada (canjea el token y pide contraseña). */
   authInvite: "/auth/invitacion",

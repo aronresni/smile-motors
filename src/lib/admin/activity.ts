@@ -63,3 +63,30 @@ export async function getActivityFeed(
   if (!res.ok) return { items: [], total: 0 };
   return { items: res.items ?? [], total: res.total ?? 0 };
 }
+
+export interface ActorFilterOption {
+  id: string;
+  name: string;
+}
+
+/**
+ * Administradores para el filtro "quién lo hizo" de la Actividad.
+ *
+ * Sale del directorio seguro (`people_directory`): solo id, nombre visible y
+ * rol. Quien todavía no puso su nombre aparece por su identificador corto, no
+ * por su correo.
+ */
+export async function getAdminFilterOptions(): Promise<ActorFilterOption[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("people_directory")
+    .select("id, display_name, role")
+    .eq("role", "admin");
+  if (error || !data) return [];
+  return data
+    .map((p) => ({
+      id: p.id as string,
+      name: (p.display_name as string | null) ?? `Sin nombre (${String(p.id).slice(0, 8)})`,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}

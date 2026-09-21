@@ -13,6 +13,8 @@ export const ACTIVITY_PAGE_SIZE = 50;
 
 export interface ActivityListQuery {
   category: "ALL" | ActivityCategory;
+  /** Quién HIZO la acción (no confundir con el vendedor de la venta). */
+  actorId: string | null;
   sellerId: string | null;
   search: string;
   startDate: string | null;
@@ -37,6 +39,7 @@ export function parseActivityListSearchParams(raw: RawParams): ActivityListQuery
   const end = first(raw.end);
   return {
     category: CATEGORY_VALUES.has(categoryRaw) ? (categoryRaw as ActivityCategory) : "ALL",
+    actorId: first(raw.actor) || null,
     sellerId: first(raw.seller) || null,
     search: first(raw.q).slice(0, 120),
     startDate: isIsoDate(start) ? start : null,
@@ -46,15 +49,16 @@ export function parseActivityListSearchParams(raw: RawParams): ActivityListQuery
 }
 
 export function hasActiveActivityFilters(q: ActivityListQuery): boolean {
-  return q.category !== "ALL" || Boolean(q.sellerId) || q.search !== "" || Boolean(q.startDate) || Boolean(q.endDate);
+  return q.category !== "ALL" || Boolean(q.actorId) || Boolean(q.sellerId) || q.search !== "" || Boolean(q.startDate) || Boolean(q.endDate);
 }
 
 export function buildActivityListHref(base: string, q: Partial<ActivityListQuery>): string {
   const merged: ActivityListQuery = {
-    category: "ALL", sellerId: null, search: "", startDate: null, endDate: null, page: 1, ...q,
+    category: "ALL", actorId: null, sellerId: null, search: "", startDate: null, endDate: null, page: 1, ...q,
   };
   const sp = new URLSearchParams();
   if (merged.category !== "ALL") sp.set("category", merged.category);
+  if (merged.actorId) sp.set("actor", merged.actorId);
   if (merged.sellerId) sp.set("seller", merged.sellerId);
   if (merged.search) sp.set("q", merged.search);
   if (merged.startDate) sp.set("start", merged.startDate);

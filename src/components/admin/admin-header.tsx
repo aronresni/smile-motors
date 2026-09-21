@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AdminNav, adminSectionLabel } from "@/components/admin/admin-nav";
 import { CommandPalette } from "@/components/admin/command-palette";
@@ -8,18 +9,14 @@ import { BrandMark } from "@/components/brand/brand-mark";
 import { LogOutIcon, MenuIcon, SearchIcon, ShieldIcon, XIcon } from "@/components/ui/icons";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { ROUTES } from "@/lib/constants";
+import { initialsOf } from "@/lib/identity/person";
 
 interface AdminHeaderProps {
   fullName: string | null;
   email: string | null;
   approvalsCount: number;
   alertsCount: number;
-}
-
-function initials(name: string | null, email: string | null): string {
-  const base = (name ?? email ?? "A").trim();
-  const parts = base.split(/\s+/).filter(Boolean);
-  return ((parts[0]?.[0] ?? "A") + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 
 /**
@@ -111,16 +108,26 @@ export function AdminHeader({ fullName, email, approvalsCount, alertsCount }: Ad
               <ShieldIcon size={13} />
               <span className="hidden sm:inline">Admin</span>
             </span>
-            <div className="hidden text-right leading-tight xl:block">
-              <p className="max-w-[180px] truncate text-sm font-medium text-foreground">{fullName ?? "Administrador"}</p>
-              <p className="max-w-[180px] truncate text-[11px] text-muted-foreground">{email}</p>
-            </div>
-            <span
-              aria-hidden="true"
-              className="grid h-9 w-9 place-items-center rounded-full border border-border-strong bg-surface-elevated text-xs font-bold text-brand"
+            {/* Quién está operando ahora mismo, y el acceso a su perfil: es
+                donde se pone el nombre que acompañará a todo lo que haga. */}
+            <Link
+              href={ROUTES.adminPerfil}
+              title="Mi perfil"
+              className="flex items-center gap-2.5 rounded-xl px-1 py-0.5 transition-colors hover:bg-surface-elevated"
             >
-              {initials(fullName, email)}
-            </span>
+              <span className="hidden text-right leading-tight xl:block">
+                <span className="block max-w-[180px] truncate text-sm font-medium text-foreground">
+                  {fullName ?? "Completa tu perfil"}
+                </span>
+                <span className="block max-w-[180px] truncate text-[11px] text-muted-foreground">{email}</span>
+              </span>
+              <span
+                aria-hidden="true"
+                className="grid h-9 w-9 place-items-center rounded-full border border-border-strong bg-surface-elevated text-xs font-bold text-brand"
+              >
+                {initialsOf(fullName)}
+              </span>
+            </Link>
             <LogoutButton
               iconOnly
               className="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
@@ -168,8 +175,16 @@ export function AdminHeader({ fullName, email, approvalsCount, alertsCount }: Ad
               />
             </div>
             <div className="border-t border-border px-4 py-3">
-              <p className="truncate text-sm font-medium text-foreground">{fullName ?? "Administrador"}</p>
-              <p className="truncate text-xs text-muted-foreground">{email}</p>
+              <Link
+                href={ROUTES.adminPerfil}
+                onClick={() => setDrawerOpen(false)}
+                className="block"
+              >
+                <p className="truncate text-sm font-medium text-foreground">
+                  {fullName ?? "Completa tu perfil"}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">{email}</p>
+              </Link>
               <div className="mt-3">
                 <LogoutButton className="flex w-full items-center justify-center gap-2 rounded-xl border border-border-strong px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-surface-elevated hover:text-foreground">
                   <LogOutIcon size={16} />

@@ -2,10 +2,20 @@ import { ROUTES } from "@/lib/constants";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { ACTIVITY_CATEGORY_OPTIONS, type ActivityListQuery } from "@/lib/admin/activity-list-params";
 import type { SellerFilterOption } from "@/lib/admin/sellers";
+import type { ActorFilterOption } from "@/lib/admin/activity";
 
 /** Barra de filtros — formulario GET nativo (sin JS), mismo patrón que el
  * resto de los listados admin. */
-export function ActivityToolbar({ query, sellers }: { query: ActivityListQuery; sellers: SellerFilterOption[] }) {
+export function ActivityToolbar({
+  query,
+  sellers,
+  admins,
+}: {
+  query: ActivityListQuery;
+  sellers: SellerFilterOption[];
+  /** Quién hizo la acción — distinto del vendedor de la venta. */
+  admins: ActorFilterOption[];
+}) {
   return (
     <form method="get" action={ROUTES.adminActividad} className="flex flex-wrap items-end gap-2">
       <div className="min-w-[160px] flex-1">
@@ -19,6 +29,15 @@ export function ActivityToolbar({ query, sellers }: { query: ActivityListQuery; 
         />
       </div>
       <FilterSelect label="Categoría" name="category" defaultValue={query.category} options={ACTIVITY_CATEGORY_OPTIONS} />
+      <FilterSelect
+        label="Administrador"
+        name="actor"
+        defaultValue={query.actorId ?? ""}
+        options={[
+          { value: "", label: "Todos los administradores" },
+          ...admins.map((a) => ({ value: a.id, label: a.name })),
+        ]}
+      />
       <FilterSelect
         label="Vendedor"
         name="seller"

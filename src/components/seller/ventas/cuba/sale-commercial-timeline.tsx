@@ -1,9 +1,12 @@
 import type { StatusHistoryEntry } from "@/lib/sales/confirmed-sale";
+import { ActorIdentity } from "@/components/ui/actor-identity";
 
+/** El hito dice QUÉ pasó; quién lo hizo sale del propio historial (justo
+ * debajo), nunca de un genérico escrito a mano. */
 const STAGES: { toStatus: string; label: string }[] = [
   { toStatus: "PENDING", label: "Revisión solicitada" },
-  { toStatus: "SOLD", label: "Venta cerrada por el vendedor" },
-  { toStatus: "PAID", label: "Pago confirmado por administración" },
+  { toStatus: "SOLD", label: "Venta cerrada" },
+  { toStatus: "PAID", label: "Pago confirmado" },
 ];
 
 function formatWhen(iso: string): string {
@@ -62,10 +65,13 @@ export function SaleCommercialTimeline({
               {s.label}
             </p>
             {s.entry && (
-              <p className="text-[11px] text-muted-foreground">
-                {formatWhen(s.entry.changedAt)}
-                {s.entry.changedByName ? ` · ${s.entry.changedByName}` : ""}
-              </p>
+              <div className="mt-1">
+                <ActorIdentity
+                  name={s.entry.changedByName}
+                  timestamp={formatWhen(s.entry.changedAt)}
+                  size="sm"
+                />
+              </div>
             )}
             {s.entry?.reason && (
               <p className="mt-0.5 text-[11px] italic text-text-secondary">
