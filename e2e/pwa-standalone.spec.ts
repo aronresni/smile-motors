@@ -1,4 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
+import { E2E_PASSWORD } from "./credentials";
+
+const SELLER_EMAIL = "e2e-smile-seller@motods.test";
 
 /**
  * Aplicación web instalable (iPhone: "Añadir a pantalla de inicio").
@@ -122,6 +125,38 @@ test.describe("Aplicación instalable (pantalla de inicio del iPhone)", () => {
     const installedPage = await installed.newPage();
     await installedPage.goto("/login");
     await expect(installedPage.locator("html")).toHaveAttribute("data-display-mode", "standalone");
+    await installed.close();
+  });
+
+  test("las herramientas del vendedor se usan bien dentro de la app instalada", async ({
+    browser,
+  }) => {
+    // Como iOS abre la app desde la pantalla de inicio, en un iPhone estándar.
+    const installed = await browser.newContext({ viewport: { width: 375, height: 812 } });
+    await installed.addInitScript(() => {
+      Object.defineProperty(window.navigator, "standalone", { value: true, configurable: true });
+    });
+    const page = await installed.newPage();
+
+    await page.goto("/login");
+    await page.getByLabel("Correo electrónico").fill(SELLER_EMAIL);
+    await page.getByLabel("Contraseña", { exact: true }).fill(E2E_PASSWORD);
+    await page.getByRole("button", { name: /iniciar sesión/i }).click();
+    await page.waitForURL(/\/seller$/, { timeout: 30_000 });
+
+    for (const path of ["/seller/stock", "/seller/calculadora"]) {
+      await page.goto(path);
+      await expect(page.locator("html")).toHaveAttribute("data-display-mode", "standalone");
+      // La barra inferior sigue ahí y respeta el área segura del iPhone.
+      const nav = page.getByRole("navigation", { name: "Navegación del vendedor" }).first();
+      await expect(nav).toBeVisible();
+      await expect(nav.getByRole("link", { name: "Stock" })).toBeVisible();
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, `desbordamiento horizontal en ${path}`).toBeLessThanOrEqual(1);
+    }
+
     await installed.close();
   });
 });
