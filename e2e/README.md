@@ -165,6 +165,14 @@ ni pasar a VENDIDA y aparece la alerta "Comisión faltante".
 > comisión liquidada bloqueada, permisos, y ventas/comisiones/liquidaciones
 > reales intactas).
 >
+> `npm run test:financing -- --admin e2e-smile-admin@motods.test --seller
+> e2e-smile-seller@motods.test` — financiamientos editables por
+> administración y por el vendedor: cambiar financiera, plan y monto; los
+> contratos de financiera SOBREVIVEN a una edición (el motor viejo los
+> borraba en cascada); el dinero ya ACREDITADO o LIQUIDADO no se reescribe en
+> silencio (hay que deshacerlo a propósito, y queda registrado); todo o nada
+> si algo está bloqueado; altas y bajas; y nadie toca las ventas de otro.
+>
 > En equipos donde una política de control de aplicaciones bloquea el binario
 > nativo de SWC, Turbopack no arranca: `playwright.config.ts` usa
 > `next dev --webpack` y el build de producción se ejecuta con

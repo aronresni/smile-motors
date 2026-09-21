@@ -7,6 +7,9 @@ import { getCubaSaleDraft } from "@/app/(seller)/seller/ventas/draft-actions";
 import { getLatestSaleEditRequest } from "@/lib/seller/edit-requests";
 import { SaleEditRequestForm, type UnitPricingMap } from "@/components/seller/ventas/cuba/sale-edit-request-form";
 import { getProductsPricing, getSaleCommissionSummary } from "@/lib/sales/commission-summary";
+import { FinancingEditor } from "@/components/sales/financing-editor";
+import { getPaymentCatalog } from "@/lib/payments/catalog";
+import { editableAllocations } from "@/lib/sales/financing-view";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Solicitar edición · Vendedor" };
@@ -74,9 +77,10 @@ export default async function EditarVentaPage({
 
   // Mínimo de cada unidad: el precio fijo CONGELADO si ya tiene comisión
   // (VENDIDA); si no, el vigente del producto.
-  const [commission, products] = await Promise.all([
+  const [commission, products, catalog] = await Promise.all([
     getSaleCommissionSummary(saleId),
     getProductsPricing(dto.units.map((u) => String(u.product_id ?? ""))),
+    getPaymentCatalog(),
   ]);
   const pricing: UnitPricingMap = {};
   for (const u of dto.units) {
@@ -88,5 +92,23 @@ export default async function EditarVentaPage({
       : { fixedPriceCents: product?.fixedPriceCents ?? null, fixedCommissionCents: product?.fixedCommissionCents ?? null, frozen: false };
   }
 
-  return <SaleEditRequestForm saleId={saleId} dto={dto} pricing={pricing} />;
+  return (
+    <div className="space-y-4">
+      <SaleEditRequestForm saleId={saleId} dto={dto} pricing={pricing} />
+      {/* Los pagos se corrigen directamente (no van por aprobación): la base
+          bloquea por sí sola lo que ya tiene dinero dentro o contrato
+          emitido, y anular un contrato es cosa de administración. */}
+      <FinancingEditor
+        saleId={saleId}
+        saleTotalCents={
+          Number(dto.sale.sale_total_cents ?? 0) ||
+          dto.units.reduce((sum, u) => sum + Number(u.agreed_price_cents ?? 0), 0) +
+            Number(dto.sale.delivery_total_cents ?? 0)
+        }
+        methods={catalog.methods}
+        initial={editableAllocations(dto)}
+        canVoidContracts={false}
+      />
+    </div>
+  );
 }

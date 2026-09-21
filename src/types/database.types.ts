@@ -1386,6 +1386,9 @@ export type Database = {
           signed_by: string | null
           status: string
           updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
         }
         Insert: {
           accredited_at?: string | null
@@ -1410,6 +1413,9 @@ export type Database = {
           signed_by?: string | null
           status: string
           updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Update: {
           accredited_at?: string | null
@@ -1434,6 +1440,9 @@ export type Database = {
           signed_by?: string | null
           status?: string
           updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Relationships: [
           {
@@ -1474,6 +1483,13 @@ export type Database = {
           {
             foreignKeyName: "sale_financing_contracts_signed_by_fkey"
             columns: ["signed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_financing_contracts_voided_by_fkey"
+            columns: ["voided_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -2299,6 +2315,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _allocation_money_lock: {
+        Args: { p_allocation_id: string }
+        Returns: string
+      }
       _commission_config_missing_rows: {
         Args: never
         Returns: {
@@ -2871,6 +2891,10 @@ export type Database = {
         Args: { p_link_digest?: string; p_seller_id: string }
         Returns: Json
       }
+      admin_unsettle_payment_allocation: {
+        Args: { p_allocation_id: string; p_reason: string }
+        Returns: Json
+      }
       admin_update_cuba_sale: {
         Args: {
           p_admin_correction?: boolean
@@ -2953,6 +2977,10 @@ export type Database = {
           p_quantity_reported?: number
           p_variant_id: string
         }
+        Returns: Json
+      }
+      admin_void_financing_contract: {
+        Args: { p_contract_id: string; p_reason: string }
         Returns: Json
       }
       approve_sale_edit_request: {
@@ -3160,6 +3188,10 @@ export type Database = {
       }
       seller_weekly_liquidation: {
         Args: { p_seller_id?: string; p_week_start?: string }
+        Returns: Json
+      }
+      set_sale_payment_allocations: {
+        Args: { p_allocations: Json; p_reason: string; p_sale_id: string }
         Returns: Json
       }
       sync_sale_payment_allocations: {

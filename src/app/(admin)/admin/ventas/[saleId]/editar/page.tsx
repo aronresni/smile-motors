@@ -6,6 +6,9 @@ import { ROUTES } from "@/lib/constants";
 import { buildInitialState } from "@/lib/admin/sale-edit-form";
 import { getProductsPricing, getSaleCommissionSummary } from "@/lib/sales/commission-summary";
 import { AdminSaleEditForm } from "@/components/admin/sale-edit/admin-sale-edit-form";
+import { FinancingEditor } from "@/components/sales/financing-editor";
+import { getPaymentCatalog } from "@/lib/payments/catalog";
+import { editableAllocations } from "@/lib/sales/financing-view";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -38,9 +41,10 @@ export default async function AdminEditSalePage({ params }: { params: Promise<{ 
     );
   }
 
-  const [commission, products] = await Promise.all([
+  const [commission, products, catalog] = await Promise.all([
     getSaleCommissionSummary(saleId),
     getProductsPricing(dto.units.map((u) => String(u.product_id ?? ""))),
+    getPaymentCatalog(),
   ]);
   // Unidades con comisión congelada: su snapshot rige el mínimo y el recálculo.
   const frozen = Object.fromEntries(
@@ -76,6 +80,20 @@ export default async function AdminEditSalePage({ params }: { params: Promise<{ 
         originalTotalCents={Number(dto.sale.sale_total_cents ?? 0) || 0}
         initial={initial}
         detailHref={detailHref}
+      />
+      {/* Los financiamientos se guardan aparte: tienen sus propias barandillas
+          (dinero ya acreditado o cobrado) y su propio motivo, así que un
+          bloqueo aquí no deshace la edición comercial de arriba. */}
+      <FinancingEditor
+        saleId={saleId}
+        saleTotalCents={
+          Number(dto.sale.sale_total_cents ?? 0) ||
+          dto.units.reduce((sum, u) => sum + Number(u.agreed_price_cents ?? 0), 0) +
+            Number(dto.sale.delivery_total_cents ?? 0)
+        }
+        methods={catalog.methods}
+        initial={editableAllocations(dto)}
+        canVoidContracts
       />
     </div>
   );
